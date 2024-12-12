@@ -1,0 +1,23 @@
+changelog:
+  categories:
+    - title: 💣️ Breaking Changes
+      labels:
+      - BREAKING CHANGE
+    - title: ✨️ New Features
+      labels:
+      - enhancement
+    - title: 🐛 Bug Fixes
+      labels:
+      - bug
+    - title: ⚡️ Performance Improvments
+      labels:
+      - performance
+    - title: 🗒️ Documentations
+      labels:
+      - documentation
+    - title: 💄 UI Styles
+      labels:
+      - style
+    - title: Othre Changes
+      labels:
+      - *
