@@ -20,4 +20,4 @@ changelog:
       - style
     - title: Othre Changes
       labels:
-      - *
+      - "*"
