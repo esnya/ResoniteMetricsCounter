@@ -2,14 +2,16 @@ name: .NET Build
 
 on:
   push:
-    branches: ["master"]
+    branches: ["master", "feature/ci"]
   create:
     tags:
       - 'v*'
 
 env:
+  AppId: 2519830
   ProjectName: ResoniteMetricsCounter
-  ArtifactName: ResoniteMetricsCounter.dll
+  ArtifactDLL: ResoniteMetricsCounter.dll
+  Configuration: Release
 
 jobs:
   build:
@@ -29,35 +31,35 @@ jobs:
     - name: Cache app
       uses: actions/cache@v4
       with:
-        path: ${{ env.ProjectName }}/Resonite/
+        path: ${{ github.workspace }}/${{ env.ProjectName }}/Resonite/
         key: app-runtime-2
 
     - name: Update app
-      run: steamcmd +force_install_dir ${{ env.ProjectName }}/Resonite +login ${{ secrets.STEAMLOGIN }} +app_update 2519830 validate +quit
+      run: steamcmd +force_install_dir ${{ github.workspace }}/${{ env.ProjectName }}/Resonite +login ${{ secrets.STEAMLOGIN }} +app_update ${{ env.AppId }} validate +quit
 
     - name: Install ResoniteModLoader
       uses: suisei-cn/actions-download-file@v1
       with:
         url: https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/ResoniteModLoader.dll
-        target: ${{ env.ProjectName }}/Resonite/Libraries/
+        target: ${{ github.workspace }}/${{ env.ProjectName }}/Resonite/Libraries/
 
     - name: Install Harmony
       uses: suisei-cn/actions-download-file@v1
       with:
         url: https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/0Harmony.dll
-        target: ${{ env.ProjectName }}/Resonite/rml_libs/
+        target: ${{ github.workspace }}/${{ env.ProjectName }}/Resonite/rml_libs/
 
     - name: Restore the application
-      run: msbuild /t:Restore /p:Configuration=RELEASE
+      run: msbuild /t:Restore /p:Configuration=${{ env.Configuration }}
 
     - name: Create the app package
-      run: msbuild /p:Configuration=RELEASE
+      run: msbuild /p:Configuration=${{ env.Configuration }}
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.ArtifactName }}.dll
-        path: ${{ env.ProjectName }}/bin/Release/net472/${{ env.ArtifactName }}.dll
+        name: ${{ env.ArtifactDLL }}
+        path: ${{ env.ProjectName }}/bin/Release/net472/${{ env.ArtifactDLL }}
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -71,10 +73,10 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        name: ${{ env.ArtifactName }}.dll
+        name: ${{ env.ArtifactDLL }}
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          *.dll
+          ${{ env.ArtifactDLL }}
         generate_release_notes: true
