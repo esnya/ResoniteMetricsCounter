@@ -32,6 +32,9 @@ jobs:
           VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" ${{ steps.find_csproj.outputs.FILE }})
           echo "::set-output name=VERSION::$VERSION"
 
+      - name: Pull tags
+        run: git fetch --tags
+
       - name: Check if tag exists
         id: check_tag
         run: |
