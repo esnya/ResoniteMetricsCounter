@@ -14,6 +14,41 @@ env:
   Configuration: Release
 
 jobs:
+  vtag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Find csproj file
+        id: find_csproj
+        run: |
+          FILE=$(find . -name "*.csproj" | head -n 1)
+          echo "::set-output name=FILE::$FILE"
+
+      - name: Get version from csproj
+        id: get_version
+        run: |
+          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" ${{ steps.find_csproj.outputs.FILE }})
+          echo "::set-output name=VERSION::$VERSION"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          TAG_EXISTS=$(git tag -l "v${{ steps.get_version.outputs.VERSION }}")
+          echo "::set-output name=TAG_EXISTS::$TAG_EXISTS"
+
+      - name: Create tag
+        if: steps.check_tag.outputs.TAG_EXISTS == ''
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.get_version.outputs.VERSION }}"
+          git push origin "v${{ steps.get_version.outputs.VERSION }}"
+    outputs:
+      tagged: ${{ steps.check_tag.outputs.TAG_EXISTS == '' }}
+      tag: v${{ steps.get_version.outputs.VERSION }}
+
   build:
     runs-on: windows-latest
     steps:
@@ -23,7 +58,8 @@ jobs:
     - name: Setup SteamCMD
       uses: CyberAndrii/setup-steamcmd@v1.2.0
 
-    - name: Checkout
+    - id: checkout
+      name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -62,13 +98,16 @@ jobs:
         path: ${{ env.ProjectName }}/bin/Release/net472/${{ env.ArtifactDLL }}
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || needs.vtag.outputs.tagged
+    needs:
+      - vtag
+      - build
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
+        ref:  ${{ needs.vtag.outputs.tagged && needs.vtag.outputs.tag || github.ref }}
         fetch-depth: 0
     - name: Download Artifacts
       uses: actions/download-artifact@v4
@@ -80,3 +119,4 @@ jobs:
         files: |
           ${{ env.ArtifactDLL }}
         generate_release_notes: true
+        tag_name: ${{ needs.vtag.outputs.tagged && needs.vtag.outputs.tag || github.ref }}
