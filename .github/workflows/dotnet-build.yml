@@ -1,0 +1,80 @@
+name: .NET Build
+
+on:
+  push:
+    branches: ["master"]
+  create:
+    tags:
+      - 'v*'
+
+env:
+  ProjectName: ResoniteMetricsCounter
+  ArtifactName: ResoniteMetricsCounter.dll
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup SteamCMD
+      uses: CyberAndrii/setup-steamcmd@v1.2.0
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Cache app
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.ProjectName }}/Resonite/
+        key: app-runtime-2
+
+    - name: Update app
+      run: steamcmd +force_install_dir ${{ env.ProjectName }}/Resonite +login ${{ secrets.STEAMLOGIN }} +app_update 2519830 validate +quit
+
+    - name: Install ResoniteModLoader
+      uses: suisei-cn/actions-download-file@v1
+      with:
+        url: https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/ResoniteModLoader.dll
+        target: ${{ env.ProjectName }}/Resonite/Libraries/
+
+    - name: Install Harmony
+      uses: suisei-cn/actions-download-file@v1
+      with:
+        url: https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/0Harmony.dll
+        target: ${{ env.ProjectName }}/Resonite/rml_libs/
+
+    - name: Restore the application
+      run: msbuild /t:Restore /p:Configuration=RELEASE
+
+    - name: Create the app package
+      run: msbuild /p:Configuration=RELEASE
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ArtifactName }}.dll
+        path: ${{ env.ProjectName }}/bin/Release/net472/${{ env.ArtifactName }}.dll
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.ArtifactName }}.dll
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          *.dll
+        generate_release_notes: true
