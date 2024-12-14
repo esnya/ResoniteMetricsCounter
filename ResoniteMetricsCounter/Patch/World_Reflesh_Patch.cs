@@ -15,7 +15,6 @@ internal static class World_RefleshStep_Patch
 
         try
         {
-            ResoniteMod.Debug(ResoniteMetricsCounterMod.panel);
             ResoniteMetricsCounterMod.panel?.Update();
         }
         catch (Exception e)

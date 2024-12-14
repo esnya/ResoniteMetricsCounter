@@ -3,7 +3,6 @@ using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Pages;
-using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,9 +10,11 @@ using System.Diagnostics;
 namespace ResoniteMetricsCounter.UIX;
 internal sealed class MetricsPanel
 {
+
     private static readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
     {
         new("Detailed", new DetailedMetricsPanelPage()),
+        new("ObjectRoot", new ObjectRootPage()),
     };
 
     public static float DEFAULT_ITEM_SIZE = 32;
@@ -21,10 +22,10 @@ internal sealed class MetricsPanel
 
     private readonly MetricsCounter metricsCounter;
     private readonly Slot slot;
-    private readonly List<Slot> pagesContainer = new();
     private readonly Sync<string> statisticsField;
     private readonly int maxItems;
-
+    private readonly Slot? pagesButtonContainer;
+    private readonly Slot? pagesContainer;
 
     public MetricsPanel(MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
@@ -41,21 +42,27 @@ internal sealed class MetricsPanel
         BuildStopButtonUI(uiBuilder);
         statisticsField = BuildStatisticsUI(uiBuilder);
 
-        uiBuilder.HorizontalLayout(PADDING);
+        var activePage = pages[0].Key;
+        pagesButtonContainer = uiBuilder.HorizontalLayout(PADDING).Slot;
+
+        uiBuilder.PushStyle();
+        uiBuilder.Style.ForceExpandWidth = false;
         foreach (var keyValuePair in pages)
         {
-            BuildPageButtonUI(uiBuilder, keyValuePair.Key);
+            BuildPageButtonUI(uiBuilder, keyValuePair.Key, keyValuePair.Key == activePage);
         }
+        uiBuilder.PopStyle();
         uiBuilder.NestOut();
 
         uiBuilder.PushStyle();
         uiBuilder.Style.FlexibleHeight = 1.0f;
-        uiBuilder.Panel();
+        pagesContainer = uiBuilder.Panel().Slot;
         uiBuilder.PopStyle();
 
         foreach (var keyValuePair in pages)
         {
-            BuildPageUI<DetailedMetricsPanelPage>(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == "Detailed");
+            uiBuilder.NestInto(pagesContainer);
+            BuildPageUI<DetailedMetricsPanelPage>(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
         }
     }
 
@@ -76,13 +83,17 @@ internal sealed class MetricsPanel
         return uiBuilder;
     }
 
-    private static void BuildStopButtonUI(in UIBuilder uiBuilder)
+    private void BuildStopButtonUI(in UIBuilder uiBuilder)
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
         button.IsPressed.Changed += (_) =>
         {
             if (button.IsPressed)
             {
+                foreach (var page in pages)
+                {
+                    page.Value.Update(metricsCounter, maxItems);
+                }
                 ResoniteMetricsCounterMod.Stop();
                 button.Enabled = false;
             }
@@ -97,19 +108,35 @@ internal sealed class MetricsPanel
         return statisticsText.Content;
     }
 
-    private void BuildPageButtonUI(in UIBuilder uiBuilder, string label)
+    private void BuildPageButtonUI(in UIBuilder uiBuilder, string label, bool defaultActive)
     {
+
+        uiBuilder.Style.FlexibleWidth = defaultActive ? 3.0f : 1.0f;
+        uiBuilder.Style.PreferredWidth = 0.0f;
+
         var button = uiBuilder.Button(label);
-        var buttonTextColor = button.Slot.GetComponentInChildren<Text>().Color;
-        button.IsPressed.Changed += (changable) =>
+        button.Slot.Name = label;
+
+        button.IsPressed.Changed += (_) =>
         {
-            if (changable is Button button && button.IsPressed)
+            if (!button.IsPressed) return;
+
+            if (pagesButtonContainer is not null)
             {
-                foreach (var slot in pagesContainer)
+                foreach (var slot in pagesButtonContainer.Children)
                 {
-                    var active = slot.Name == label;
-                    slot.ActiveSelf = active;
-                    buttonTextColor.Value = active ? RadiantUI_Constants.TEXT_COLOR : RadiantUI_Constants.DISABLED_COLOR;
+                    var layout = slot.GetComponent<LayoutElement>();
+                    if (layout is null) continue;
+
+                    layout.FlexibleWidth.Value = slot.Name == label ? 3.0f : 1.0f;
+                }
+            }
+
+            if (pagesContainer is not null)
+            {
+                foreach (var slot in pagesContainer.Children)
+                {
+                    slot.ActiveSelf = slot.Name == label;
                 }
             }
         };
@@ -127,7 +154,6 @@ internal sealed class MetricsPanel
         uiBuilder.FitContent(SizeFit.Disabled, SizeFit.MinSize);
 
         uiBuilder.PushStyle();
-        ResoniteMod.Debug("Building UI");
         page.BuildUI(uiBuilder);
         uiBuilder.PopStyle();
         uiBuilder.NestOut();
@@ -137,21 +163,16 @@ internal sealed class MetricsPanel
     {
         if (slot?.IsDisposed ?? true) return;
 
-        ResoniteMod.Debug($"Updating Metrics Panel: {metricsCounter}");
         var totalTicks = metricsCounter.TotalTicks;
         var maxTicks = metricsCounter.MaxTicks;
 
         if (statisticsField.IsDisposed) return;
-        ResoniteMod.DebugFunc(() => $"Updating Statistics Field: {statisticsField}");
         statisticsField.Value = $"Total:\t{1000.0 * totalTicks / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * maxTicks / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.Metrics.Count}";
 
-        ResoniteMod.DebugFunc(() => $"Updating Pages: {pages}");
         foreach (var page in pages)
         {
-            ResoniteMod.DebugFunc(() => $"Updating {page.Key}");
             if (page.Value.IsActive())
             {
-                ResoniteMod.DebugFunc(() => $"Updating {page.Key}");
                 page.Value.Update(metricsCounter, maxItems);
             }
         }
