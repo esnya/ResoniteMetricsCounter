@@ -1,11 +1,12 @@
 ﻿using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
-using ResoniteMetricsCounter.Metrics;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
-namespace ResoniteMetricsCounter.UIX;
-internal sealed class MetricsPanelItem
+namespace ResoniteMetricsCounter.UIX.Item;
+
+internal abstract class MetricItemBase<T>
 {
     private const float DEFAULT_ITEM_SIZE = 32;
     private const float DEFAULT_PADDING = 4;
@@ -17,7 +18,7 @@ internal sealed class MetricsPanelItem
     private readonly RectTransform metricRect;
     private readonly Sync<string> percentageField;
 
-    public MetricsPanelItem(Slot container, in Metric metric, long maxTicks, long totalTicks, int maxItems)
+    public MetricItemBase(Slot container)
     {
         var uiBuilder = new UIBuilder(container);
 
@@ -34,21 +35,21 @@ internal sealed class MetricsPanelItem
         metricTint = metricImage.Tint;
 
         uiBuilder.HorizontalLayout(DEFAULT_PADDING);
-        uiBuilder.Style.FlexibleWidth = 0.0f;
+        uiBuilder.Style.FlexibleWidth = 1.0f;
 
-        var labelText = uiBuilder.Text(metric.GetName(), bestFit: true, alignment: Alignment.MiddleLeft);
+        var labelText = uiBuilder.Text(null, bestFit: true, alignment: Alignment.MiddleLeft);
         labelText.RectTransform.AnchorMax.Value = new float2(0.8f, 1.0f);
         labelText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
         labelField = labelText.Content;
 
-        uiBuilder.Style.PreferredWidth= uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE * 3;
+        uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE * 3;
         uiBuilder.Style.FlexibleWidth = -1.0f;
-        var timeText = uiBuilder.Text("0", bestFit: false, size: 24, alignment: Alignment.MiddleRight);
+        var timeText = uiBuilder.Text(null, bestFit: false, size: 24, alignment: Alignment.MiddleRight);
         timeText.ParseRichText.Value = false;
         timeText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
         timeField = timeText.Content;
 
-        var percentageText = uiBuilder.Text("0.000%", bestFit: false, size: 24, alignment: Alignment.MiddleRight);
+        var percentageText = uiBuilder.Text(null, bestFit: false, size: 24, alignment: Alignment.MiddleRight);
         percentageText.ParseRichText.Value = false;
         percentageText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
         percentageField = percentageText.Content;
@@ -63,32 +64,44 @@ internal sealed class MetricsPanelItem
                 slot.Destroy();
             }
         };
-
-        Update(metric, maxTicks, totalTicks, maxItems);
     }
 
-    public bool Update(in Metric metric, long maxTicks, long totalTicks, int maxItems)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected abstract long GetTicks(in T metric);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected abstract string? GetLabel(in T metric);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected abstract Slot? GetReference(in T metric);
+
+    public bool Update(in T metric, long maxTicks, long totalTicks)
     {
         if (slot.IsDisposed) return false;
 
-        var maxRatio = (float)metric.Ticks / maxTicks;
+        var ticks = GetTicks(metric);
+        var maxRatio = (float)ticks / maxTicks;
 
-        slot.OrderOffset = -metric.Ticks;
-        labelField.Value = metric.GetName();
-        timeField.Value = $"{((double)1000.0 * metric.Ticks / Stopwatch.Frequency):0.0}ms";
-        percentageField.Value = $"{(double)metric.Ticks / totalTicks:P3}";
+        slot.OrderOffset = -ticks;
+        var label = GetLabel(metric);
+        if (label is null) return false;
+
+        labelField.Value = label;
+
+        var doubleTicks = (double)ticks;
+        timeField.Value = $"{1000.0 * doubleTicks / Stopwatch.Frequency:0.0}ms";
+        percentageField.Value = $"{doubleTicks / totalTicks:P3}";
         metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, maxRatio);
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 
-        slot.ActiveSelf = slot.ChildIndex < maxItems;
-
-        if (metric.Slot?.IsDestroyed ?? true)
+        var reference = GetReference(metric);
+        if (reference is null || reference.IsDisposed)
         {
             referenceProxySource.Enabled = false;
         }
         else
         {
-            referenceProxySource.Reference.Target = metric.Slot!;
+            referenceProxySource.Reference.Target = reference;
         }
 
         return true;

@@ -46,7 +46,7 @@ internal sealed class MetricsCounter : IDisposable
 
     public void Add(in Metric metric)
     {
-        if (metric.Ticks == 0 || blackList.Contains(metric.Name) || ignoredHierarchy is not null && metric.Slot.IsChildOf(ignoredHierarchy, includeSelf: true)) return;
+        if (metric.Ticks == 0 || blackList.Contains(metric.Name) || (ignoredHierarchy is not null && metric.Slot.IsChildOf(ignoredHierarchy, includeSelf: true))) return;
 
         TotalTicks += metric.Ticks;
 

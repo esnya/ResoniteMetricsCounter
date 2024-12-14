@@ -69,6 +69,41 @@ internal struct Metric
 
     public static long Frequency => Stopwatch.Frequency;
 
+
+    [JsonConverter(typeof(SlotHierarchyConverter))]
+    public readonly Slot? ObjectRoot
+    {
+        get
+        {
+            return Slot.Parent?.GetObjectRoot();
+        }
+    }
+
+    public readonly string Label
+    {
+        get
+        {
+            var parent = Slot.Parent;
+            var root = parent?.GetObjectRoot();
+
+            if (parent is null)
+            {
+                return $"{Slot.Name}.{Name}[{Type}]";
+            }
+            else if (root is null || root == parent)
+            {
+                return $"{parent.Name}/{Slot.Name}.{Name}[{Type}]";
+            }
+
+            return $"{root.Name}/../{parent.Name}/{Slot.Name}.{Name}[{Type}]";
+        }
+    }
+
+    public override readonly int GetHashCode()
+    {
+        return Slot.ReferenceID.GetHashCode() ^ Name.GetHashCode() ^ Type.GetHashCode();
+    }
+
     public static Metric operator +(Metric a, Metric b)
     {
         return new Metric
@@ -79,35 +114,4 @@ internal struct Metric
             Ticks = a.Ticks + b.Ticks,
         };
     }
-
-    public readonly string GetName()
-    {
-        var parent = Slot.Parent;
-        var root = parent?.GetObjectRoot();
-
-        if (parent is null)
-        {
-            return $"{Slot.Name}.{Name}[{Type}]";
-        }
-        else if (root is null || root == parent)
-        {
-            return $"{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-        }
-
-        return $"{root.Name}/../{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-    }
-
-    public override readonly int GetHashCode()
-    {
-        return Slot.ReferenceID.GetHashCode() ^ Name.GetHashCode() ^ Type.GetHashCode();
-    }
-
-    //public bool Equals(Metric other) {
-    //	return Slot == other.Slot && Name == other.Name && Type == other.Type;
-    //}
-
-    //public int CompareTo(Metric other) {
-    //	if (Equals(other)) return 0;
-    //	return (int)(other.Ticks - Ticks);
-    //}
 }
