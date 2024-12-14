@@ -11,7 +11,7 @@ namespace ResoniteMetricsCounter.UIX;
 internal sealed class MetricsPanel
 {
 
-    private static readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
+    private readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
     {
         new("Detailed", new DetailedMetricsPanelPage()),
         new("ObjectRoot", new ObjectRootPage()),
