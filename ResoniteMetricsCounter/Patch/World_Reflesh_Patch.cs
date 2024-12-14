@@ -1,5 +1,6 @@
 ﻿using FrooxEngine;
 using HarmonyLib;
+using ResoniteModLoader;
 using System;
 
 namespace ResoniteMetricsCounter.Patch;
@@ -14,12 +15,13 @@ internal static class World_RefleshStep_Patch
 
         try
         {
+            ResoniteMod.Debug(ResoniteMetricsCounterMod.panel);
             ResoniteMetricsCounterMod.panel?.Update();
         }
         catch (Exception e)
         {
-            ResoniteMetricsCounterMod.Error("Failed to update Resonite Profiler panel.");
-            ResoniteMetricsCounterMod.Error(e);
+            ResoniteMod.Error("Failed to update Resonite Profiler panel.");
+            ResoniteMod.Error(e);
         }
     }
 }
