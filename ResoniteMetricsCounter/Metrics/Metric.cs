@@ -10,11 +10,13 @@ namespace ResoniteMetricsCounter.Metrics;
 
 internal enum MetricType
 {
-    Updates,
     PhysicsMoved,
+    PhysicsUpdate,
+    Updates,
     ProtoFluxContinuousChanges,
     ProtoFluxUpdates,
     Changes,
+    Connectors,
 }
 
 
