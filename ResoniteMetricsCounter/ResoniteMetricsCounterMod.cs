@@ -26,6 +26,8 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
 {
     private static Assembly ModAssembly => typeof(ResoniteMetricsCounterMod).Assembly;
 
+    private const string MENU_ACTION = "Performance Metrics Counter (Mod)";
+
     public override string Name => ModAssembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
     public override string Author => ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
     public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
@@ -60,8 +62,9 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
 
-        DevCreateNewForm.AddAction("/Editor", "Performance Metrics Counter (Mod)", (_) => Start());
+        DevCreateNewForm.AddAction("/Editor", MENU_ACTION, (_) => Start());
     }
+#if DEBUG
 
     public static void BeforeHotReload()
     {
@@ -69,12 +72,14 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         {
             Stop();
             harmony.UnpatchCategory(Category.CORE);
+            HotReloader.RemoveMenuOption("/Editor", MENU_ACTION);
         }
         catch (System.Exception e)
         {
             Error(e);
         }
     }
+#endif
 
     private static IEnumerable<string> ParseCommaSeparatedString(string? str)
     {
