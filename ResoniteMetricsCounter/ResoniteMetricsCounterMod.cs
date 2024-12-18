@@ -36,7 +36,7 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => "UserPoseController,TipTouchSource,LocomotionController,HandPoser");
+    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => "UserPoseController,TipTouchSource,LocomotionController,HandPoser,InteractionLaser");
 
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<float2> panelSizeKey = new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
