@@ -57,14 +57,9 @@ internal abstract class MetricItemBase<T>
         uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE;
 
         var deactivateButton = uiBuilder.Button(OfficialAssets.Common.Icons.Cross, RadiantUI_Constants.Hero.RED);
-        deactivateButton.IsPressed.Changed += (_) =>
-        {
-            if (deactivateButton.IsPressed)
-            {
-                slot.Destroy();
-            }
-        };
+        deactivateButton.LocalPressed += (_, _) => slot.Destroy();
     }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract long GetTicks(in T metric);

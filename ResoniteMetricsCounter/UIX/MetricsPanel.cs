@@ -86,17 +86,14 @@ internal sealed class MetricsPanel
     private void BuildStopButtonUI(in UIBuilder uiBuilder)
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
-        button.IsPressed.Changed += (_) =>
+        button.LocalPressed += (_, _) =>
         {
-            if (button.IsPressed)
+            foreach (var page in pages)
             {
-                foreach (var page in pages)
-                {
-                    page.Value.Update(metricsCounter, maxItems);
-                }
-                ResoniteMetricsCounterMod.Stop();
-                button.Enabled = false;
+                page.Value.Update(metricsCounter, maxItems);
             }
+            ResoniteMetricsCounterMod.Stop();
+            button.Enabled = false;
         };
     }
 
@@ -117,10 +114,8 @@ internal sealed class MetricsPanel
         var button = uiBuilder.Button(label);
         button.Slot.Name = label;
 
-        button.IsPressed.Changed += (_) =>
+        button.LocalPressed += (_, _) =>
         {
-            if (!button.IsPressed) return;
-
             if (pagesButtonContainer is not null)
             {
                 foreach (var slot in pagesButtonContainer.Children)
