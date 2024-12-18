@@ -11,6 +11,8 @@ using ResoniteMetricsCounter.Patch;
 using ResoniteMetricsCounter.UIX;
 
 using ResoniteModLoader;
+using FrooxEngine;
+
 
 
 
@@ -57,6 +59,8 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
     {
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
+
+        DevCreateNewForm.AddAction("/Editor", "Performance Metrics Counter (Mod)", (_) => Start());
     }
 
     public static void BeforeHotReload()

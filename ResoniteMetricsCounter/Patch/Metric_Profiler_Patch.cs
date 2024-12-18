@@ -2,12 +2,13 @@
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteMetricsCounter.Metrics;
+using ResoniteMetricsCounter.Utils;
+using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-
 
 namespace ResoniteMetricsCounter.Patch;
 
@@ -15,6 +16,8 @@ namespace ResoniteMetricsCounter.Patch;
 [HarmonyPatchCategory(Category.PROFILER)]
 internal static class Metric_Profiler_Patch
 {
+    private static readonly StopwatchPool stopwatch = new();
+
     private static readonly Dictionary<string, MetricType> MetricTypeByMethod = new() {
         { nameof(Component.InternalRunApplyChanges), MetricType.Changes },
         { nameof(Component.InternalRunUpdate), MetricType.Updates},
@@ -22,27 +25,6 @@ internal static class Metric_Profiler_Patch
         { nameof(ProtoFluxNodeGroup.RunNodeChanges), MetricType.ProtoFluxContinuousChanges },
         { nameof(ProtoFluxNodeGroup.RunNodeUpdates), MetricType.ProtoFluxUpdates },
     };
-
-    static readonly LinkedList<Stopwatch> stopwatchPool = new();
-    static Stopwatch GetAndStartStopwatch()
-    {
-        if (stopwatchPool.Count == 0)
-        {
-            return Stopwatch.StartNew();
-        }
-        var stopwatch = stopwatchPool.Last.Value;
-        stopwatchPool.RemoveLast();
-        stopwatch.Restart();
-        return stopwatch;
-    }
-
-    static long ReleaseStopwatch(Stopwatch stopwatch)
-    {
-        stopwatch.Stop();
-        var result = stopwatch.ElapsedTicks;
-        stopwatchPool.AddLast(stopwatch);
-        return result;
-    }
 
     static IEnumerable<MethodBase> TargetMethods()
     {
@@ -55,14 +37,14 @@ internal static class Metric_Profiler_Patch
 
     static void Prefix(out Stopwatch __state)
     {
-        __state = GetAndStartStopwatch();
+        __state = stopwatch.GetAndStart();
     }
 
     static void Postfix(object __instance, MethodBase __originalMethod, Stopwatch __state)
     {
         try
         {
-            var ticks = ReleaseStopwatch(__state);
+            var ticks = stopwatch.Release(__state);
 
             if (__instance is Worker worker)
             {
@@ -101,13 +83,13 @@ internal static class Metric_Profiler_Patch
             }
             else
             {
-                ResoniteMetricsCounterMod.Debug($"Unknown instance type: {__instance}");
+                ResoniteMod.DebugFunc(() => $"Unknown instance type: {__instance}");
             }
         }
         catch (Exception e)
         {
-            ResoniteMetricsCounterMod.Error("Failed to add metric");
-            ResoniteMetricsCounterMod.Error(e);
+            ResoniteMod.Error("Failed to add metric");
+            ResoniteMod.Error(e);
         }
     }
 }
