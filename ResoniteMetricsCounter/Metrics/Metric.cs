@@ -1,119 +1,50 @@
 ﻿using FrooxEngine;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace ResoniteMetricsCounter.Metrics;
 
-internal enum MetricType
+
+internal class Metric<T> where T : IWorldElement
 {
-    PhysicsMoved,
-    PhysicsUpdate,
-    Updates,
-    ProtoFluxContinuousChanges,
-    ProtoFluxUpdates,
-    Changes,
-    Connectors,
+    /// <summary>
+    /// Target element of the metric.
+    /// </summary>
+    [JsonInclude] public readonly T Target;
+
+    /// <summary>
+    /// Ticks of the metric.
+    /// </summary>
+    [JsonInclude] public long Ticks { get; private set; }
+
+
+    public Metric(T target, long ticks = 0)
+    {
+        Target = target;
+        Ticks = ticks;
+    }
+
+
+    /// <summary>
+    /// Add ticks to the metric.
+    /// </summary>
+    /// <param name="ticks">Ticks to add.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Add(long ticks)
+    {
+        Ticks += ticks;
+    }
 }
 
-
-#pragma warning disable CA1812
-internal sealed class SlotHierarchyConverter : JsonConverter<Slot>
+internal sealed class StageMetric<T> : Metric<T> where T : IWorldElement
 {
-    private readonly Dictionary<Slot, string> cache = new();
+    /// <summary>
+    /// World reflesh stage of the metric.
+    /// </summary>
+    [JsonInclude] public readonly World.RefreshStage Stage;
 
-    public override Slot ReadJson(JsonReader reader, Type objectType, Slot? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public StageMetric(World.RefreshStage stage, T target, long ticks = 0) : base(target, ticks)
     {
-        throw new NotImplementedException();
-    }
-
-    public override void WriteJson(JsonWriter writer, Slot? value, JsonSerializer serializer)
-    {
-        if (value is null)
-        {
-            writer.WriteNull();
-            return;
-        }
-
-        if (cache.TryGetValue(value, out var cached))
-        {
-            writer.WriteValue(cached);
-            return;
-        }
-
-        var stringBuilder = new StringBuilder();
-
-        for (var s = value; s != null; s = s.Parent)
-        {
-            stringBuilder.Insert(0, s.Name);
-            stringBuilder.Insert(0, "/");
-        }
-
-        writer.WriteValue(cache[value] = stringBuilder.ToString());
-    }
-}
-#pragma warning restore CA1812
-
-internal struct Metric
-{
-    [JsonConverter(typeof(SlotHierarchyConverter))]
-    public Slot Slot;
-
-    public string Name;
-
-    [JsonConverter(typeof(StringEnumConverter))]
-    public MetricType Type;
-
-    public long Ticks;
-
-    public static long Frequency => Stopwatch.Frequency;
-
-
-    [JsonConverter(typeof(SlotHierarchyConverter))]
-    public readonly Slot? ObjectRoot
-    {
-        get
-        {
-            return Slot.Parent?.GetObjectRoot();
-        }
-    }
-
-    public readonly string Label
-    {
-        get
-        {
-            var parent = Slot.Parent;
-            var root = parent?.GetObjectRoot();
-
-            if (parent is null)
-            {
-                return $"{Slot.Name}.{Name}[{Type}]";
-            }
-            else if (root is null || root == parent)
-            {
-                return $"{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-            }
-
-            return $"{root.Name}/../{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-        }
-    }
-
-    public override readonly int GetHashCode()
-    {
-        return Slot.ReferenceID.GetHashCode() ^ Name.GetHashCode() ^ Type.GetHashCode();
-    }
-
-    public static Metric operator +(Metric a, Metric b)
-    {
-        return new Metric
-        {
-            Slot = a.Slot,
-            Name = a.Name,
-            Type = a.Type,
-            Ticks = a.Ticks + b.Ticks,
-        };
+        Stage = stage;
     }
 }

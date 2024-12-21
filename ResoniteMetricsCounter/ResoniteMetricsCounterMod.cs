@@ -12,6 +12,8 @@ using ResoniteMetricsCounter.UIX;
 
 using ResoniteModLoader;
 using FrooxEngine;
+using ResoniteMetricsCounter.Utils;
+
 
 
 
@@ -47,6 +49,7 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? panel;
     internal static MetricsCounter? Writer { get; private set; }
+    private static string menuActionLabel = MENU_ACTION;
 
     public override void OnEngineInit()
     {
@@ -62,7 +65,13 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
 
-        DevCreateNewForm.AddAction("/Editor", MENU_ACTION, (_) => Start());
+        Engine.Current.WorldManager.WorldFocused += OnWorldFocused;
+
+#if DEBUG
+        menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+#endif
+
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, (_) => Start());
     }
 #if DEBUG
 
@@ -72,24 +81,29 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         {
             Stop();
             harmony.UnpatchCategory(Category.CORE);
-            HotReloader.RemoveMenuOption("/Editor", MENU_ACTION);
+            HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
+            Engine.Current.WorldManager.WorldFocused -= OnWorldFocused;
         }
         catch (System.Exception e)
         {
             Error(e);
         }
     }
-#endif
-
-    private static IEnumerable<string> ParseCommaSeparatedString(string? str)
-    {
-        return str?.Split(',')?.Select(item => item.Trim()) ?? Enumerable.Empty<string>();
-    }
-
 
     public static void OnHotReload(ResoniteMod modInstance)
     {
         Init(modInstance);
+    }
+#endif
+
+    private static void OnWorldFocused(World world)
+    {
+        WorldElementHelper.Clear();
+    }
+
+    private static IEnumerable<string> ParseCommaSeparatedString(string? str)
+    {
+        return str?.Split(',')?.Select(item => item.Trim()) ?? Enumerable.Empty<string>();
     }
 
     public static void Start()

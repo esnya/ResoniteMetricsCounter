@@ -68,7 +68,7 @@ internal abstract class MetricItemBase<T>
     protected abstract string? GetLabel(in T metric);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected abstract Slot? GetReference(in T metric);
+    protected abstract IWorldElement? GetReference(in T metric);
 
     public bool Update(in T metric, long maxTicks, long totalTicks)
     {
@@ -90,7 +90,7 @@ internal abstract class MetricItemBase<T>
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 
         var reference = GetReference(metric);
-        if (reference is null || reference.IsDisposed)
+        if (reference is null || reference.IsRemoved)
         {
             referenceProxySource.Enabled = false;
         }

@@ -1,13 +1,11 @@
-﻿using FrooxEngine;
+﻿using Elements.Core;
+using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
-using ResoniteMetricsCounter.Metrics;
-using ResoniteMetricsCounter.Utils;
 using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 
 namespace ResoniteMetricsCounter.Patch;
@@ -16,16 +14,23 @@ namespace ResoniteMetricsCounter.Patch;
 [HarmonyPatchCategory(Category.PROFILER)]
 internal static class Metric_Profiler_Patch
 {
-    private static readonly StopwatchPool stopwatch = new();
+    internal sealed class CounterContext : IPoolable
+    {
+        private readonly Stopwatch stopwatch = new();
 
-    private static readonly Dictionary<string, MetricType> MetricTypeByMethod = new() {
-        { "Slot_PhysicsWorldTransformChanged", MetricType.PhysicsMoved },
-        { nameof(Component.InternalRunUpdate), MetricType.Updates},
-        { nameof(ProtoFluxNodeGroup.RunNodeChanges), MetricType.ProtoFluxContinuousChanges },
-        { nameof(ProtoFluxNodeGroup.RunNodeUpdates), MetricType.ProtoFluxUpdates },
-        { nameof(Component.InternalRunApplyChanges), MetricType.Changes },
-        { nameof(IImplementable.InternalUpdateConnector), MetricType.Connectors }
-    };
+        public int Ticks => (int)stopwatch.ElapsedTicks;
+
+        public void Start()
+        {
+            stopwatch.Start();
+        }
+
+        public void Clean()
+        {
+            stopwatch.Stop();
+            stopwatch.Reset();
+        }
+    }
 
     static IEnumerable<MethodBase> TargetMethods()
     {
@@ -44,70 +49,23 @@ internal static class Metric_Profiler_Patch
         yield return AccessTools.Method(typeof(ImplementableComponent<IConnector>), nameof(ImplementableComponent<IConnector>.InternalUpdateConnector));
     }
 
-    static void Prefix(out Stopwatch __state)
+    static void Prefix(out CounterContext __state)
     {
-        __state = stopwatch.GetAndStart();
+        __state = Pool.Borrow<CounterContext>();
+        __state.Start();
     }
 
-    static void Postfix(object __instance, MethodBase __originalMethod, Stopwatch __state)
+    static void Postfix(object __instance, ref CounterContext __state)
     {
         try
         {
-            var ticks = stopwatch.Release(__state);
+            var ticks = __state.Ticks;
+            Pool.Return(ref __state);
 
-            if (__instance is Slot slot)
-            {
-                if (slot.IsLocalElement || slot.IsDisposed || slot.World.Focus != World.WorldFocus.Focused)
-                {
-                    return;
-                }
-
-                ResoniteMetricsCounterMod.Writer?.Add(
-                    slot.Name,
-                    slot,
-                    ticks,
-                    MetricTypeByMethod[__originalMethod.Name]
-                );
-            }
-            if (__instance is Worker worker)
-            {
-                if (worker.World.Focus != World.WorldFocus.Focused) return;
-
-                if (worker.Parent is not Slot workerSlot || workerSlot.IsLocalElement)
-                {
-                    return;
-                }
-
-                ResoniteMetricsCounterMod.Writer?.Add(
-                    worker.Name,
-                    workerSlot,
-                    ticks,
-                    MetricTypeByMethod[__originalMethod.Name]
-                );
-            }
-            else if (__instance is ProtoFluxNodeGroup group)
-            {
-                if (group.World.Focus != World.WorldFocus.Focused) return;
-
-                var node = group.Nodes.FirstOrDefault();
-                if (node is null)
-                {
-                    return;
-                }
-
-                var nodeSlot = node.Slot;
-
-                ResoniteMetricsCounterMod.Writer?.Add(
-                    group.Name,
-                    nodeSlot,
-                    ticks,
-                    MetricTypeByMethod[__originalMethod.Name]
-                );
-            }
-            else
-            {
-                ResoniteMod.DebugFunc(() => $"Unknown instance type: {__instance}");
-            }
+            ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(
+                __instance,
+                ticks
+            );
         }
         catch (Exception e)
         {

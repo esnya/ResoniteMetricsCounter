@@ -31,7 +31,7 @@
 
 	<PropertyGroup>
 		<Product>$(AssemblyTitle)</Product>
-		<Copyright>Copylight (c) 2024 $(Authors)</Copyright>
+		<Copyright>Copyright (c) 2024 $(Authors)</Copyright>
 		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<GenerateDocumentationFile>False</GenerateDocumentationFile>
@@ -72,8 +72,12 @@
 			<HintPath>$(ResonitePath)Resonite_Data\Managed\Elements.Core.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="Newtonsoft.Json">
-			<HintPath>$(ResonitePath)Resonite_Data\Managed\Newtonsoft.Json.dll</HintPath>
+		<Reference Include="System.Memory">
+			<HintPath>$(ResonitePath)Resonite_Data\Managed\System.Memory.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="System.Text.Json">
+			<HintPath>$(ResonitePath)Resonite_Data\Managed\System.Text.Json.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 

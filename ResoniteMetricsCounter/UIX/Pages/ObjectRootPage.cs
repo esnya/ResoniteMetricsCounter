@@ -2,6 +2,7 @@
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
+using ResoniteMetricsCounter.Utils;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,26 +10,20 @@ namespace ResoniteMetricsCounter.UIX.Pages;
 
 internal sealed class ObjectRootPage : IMetricsPage
 {
-    private struct ObjectRootMetrics
-    {
-        public Slot? ObjectRoot;
-        public long Ticks;
-    }
-
-    private sealed class Item : MetricItemBase<ObjectRootMetrics>
+    private sealed class Item : MetricItemBase<Metric<Slot>>
     {
         public Item(Slot container) : base(container)
         {
         }
-        protected override string? GetLabel(in ObjectRootMetrics metric)
+        protected override string GetLabel(in Metric<Slot> metric)
         {
-            return metric.ObjectRoot?.Name;
+            return $"{metric.Target.GetNameFast()}";
         }
-        protected override Slot? GetReference(in ObjectRootMetrics metric)
+        protected override IWorldElement? GetReference(in Metric<Slot> metric)
         {
-            return metric.ObjectRoot;
+            return metric.Target;
         }
-        protected override long GetTicks(in ObjectRootMetrics metric)
+        protected override long GetTicks(in Metric<Slot> metric)
         {
             return metric.Ticks;
         }
@@ -66,29 +61,18 @@ internal sealed class ObjectRootPage : IMetricsPage
             items.AddRange(Enumerable.Repeat<Item?>(null, maxItems - items.Count));
         }
 
-        var metrics = from metric in metricsCounter.Metrics.Values
-                      group metric by metric.ObjectRoot into g
-                      select new ObjectRootMetrics
-                      {
-                          ObjectRoot = g.Key,
-                          Ticks = g.Sum(a => a.Ticks)
-                      } into om
-                      orderby om.Ticks descending
-                      select om;
-
-        long maxTicks = 0;
-        var totalTicks = metricsCounter.TotalTicks;
+        long maxTicks = metricsCounter.ByObjectRoot.Max;
+        var totalTicks = metricsCounter.ByObjectRoot.Total;
 
         int i = 0;
-        foreach (var metric in metrics.Take(maxItems))
+        foreach (var metric in metricsCounter.ByObjectRoot.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
             var item = items[i] ??= new Item(container!);
             if (i == 0) maxTicks = metric.Ticks;
 
-            if (!item.Update(metric, maxTicks, metricsCounter.TotalTicks))
+            if (!item.Update(metric, maxTicks, totalTicks))
             {
-                var toRemove = metricsCounter.Metrics.Values.FirstOrDefault(m => m.ObjectRoot == metric.ObjectRoot);
-                metricsCounter.Remove(toRemove);
+                metricsCounter.ByObjectRoot.Remove(metric.Target);
             }
 
             i++;

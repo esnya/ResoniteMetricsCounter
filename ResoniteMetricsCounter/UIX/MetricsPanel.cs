@@ -62,7 +62,7 @@ internal sealed class MetricsPanel
         foreach (var keyValuePair in pages)
         {
             uiBuilder.NestInto(pagesContainer);
-            BuildPageUI<DetailedMetricsPanelPage>(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
+            BuildPageUI(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
         }
     }
 
@@ -137,7 +137,7 @@ internal sealed class MetricsPanel
         };
     }
 
-    private static void BuildPageUI<T>(UIBuilder uiBuilder, in IMetricsPage page, in string label, bool active) where T : IMetricsPage, new()
+    private static void BuildPageUI(UIBuilder uiBuilder, in IMetricsPage page, in string label, bool active)
     {
         var slot = uiBuilder.Next(label);
         slot.ActiveSelf = active;
@@ -158,11 +158,8 @@ internal sealed class MetricsPanel
     {
         if (slot?.IsDisposed ?? true) return;
 
-        var totalTicks = metricsCounter.TotalTicks;
-        var maxTicks = metricsCounter.MaxTicks;
-
         if (statisticsField.IsDisposed) return;
-        statisticsField.Value = $"Total:\t{1000.0 * totalTicks / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * maxTicks / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.Metrics.Count}";
+        statisticsField.Value = $"Total:\t{1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.ByElement.Count}";
 
         foreach (var page in pages)
         {
