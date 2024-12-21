@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ResoniteMetricsCounter.UIX;
-internal sealed class MetricsPanel
+public sealed class MetricsPanel
 {
 
     private readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
@@ -17,8 +17,8 @@ internal sealed class MetricsPanel
         new("ObjectRoot", new ObjectRootPage()),
     };
 
-    public static float DEFAULT_ITEM_SIZE = 32;
-    public static float PADDING = 4;
+    public const float DEFAULTITEMSIZE = 32;
+    public const float PADDING = 4;
 
     private readonly MetricsCounter metricsCounter;
     private readonly Slot slot;
@@ -29,6 +29,8 @@ internal sealed class MetricsPanel
 
     public MetricsPanel(MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
+        if (metricsCounter is null) throw new ArgumentNullException(nameof(metricsCounter));
+
         this.maxItems = maxItems;
         this.metricsCounter = metricsCounter;
 
@@ -77,7 +79,7 @@ internal sealed class MetricsPanel
 
         var uiBuilder = RadiantUI_Panel.SetupPanel(slot, "Metrics", size, pinButton: true);
         uiBuilder.Style.TextAutoSizeMin = 0;
-        uiBuilder.Style.MinHeight = DEFAULT_ITEM_SIZE;
+        uiBuilder.Style.MinHeight = DEFAULTITEMSIZE;
         uiBuilder.Style.ForceExpandHeight = false;
 
         return uiBuilder;

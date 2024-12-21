@@ -15,36 +15,49 @@ using System.Text.Json.Serialization;
 namespace ResoniteMetricsCounter.Metrics;
 
 
-internal sealed class MetricsCounter : IDisposable
+public sealed class MetricsCounter : IDisposable
 {
+    private readonly CachedElementValue<IWorldElement, bool> shouldSkip;
+
     [JsonInclude] public Slot? IgnoredHierarchy { get; private set; }
     internal bool IsDisposed { get; private set; }
 
+    [JsonInclude] public string Filename { get; private set; }
+    [JsonInclude] public VersionNumber EngineVersion { get; private set; }
+    [JsonInclude] public HashSet<string> BlackList { get; private set; }
 
-    [JsonInclude] public readonly string Filename;
-    [JsonInclude] public readonly VersionNumber EngineVersion;
-    [JsonInclude] public HashSet<string> BlackList;
-
-    [JsonInclude] public readonly MetricsByStageStorage<IWorldElement> ByElement = new();
-    [JsonInclude] public readonly MetricsStorage<Slot> ByObjectRoot = new();
+    [JsonInclude] public MetricsByStageStorage<IWorldElement> ByElement { get; private set; } = new();
+    [JsonInclude] public MetricsStorage<Slot> ByObjectRoot { get; private set; } = new();
 
     public MetricsCounter(IEnumerable<string> blackList)
     {
+        shouldSkip = new(ShouldSkipImpl);
+
         EngineVersion = Engine.Version;
         Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json");
         BlackList = blackList.ToHashSet();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddForCurrentStage(object obj, long ticks)
+    private bool ShouldSkipImpl(IWorldElement element)
     {
-        if (obj is IWorldElement element) AddForCurrentStage(element, ticks);
-        else if (obj is ProtoFluxNodeGroup group) AddForCurrentStage(group, ticks);
-        else if (ResoniteMod.IsDebugEnabled()) ResoniteMod.Debug($"Unknown object type: {obj.GetType()}");
+        if (element.World.Focus != World.WorldFocus.Focused) return true;
+        if (element.IsLocalElement || element.IsRemoved || BlackList.Contains(element.GetNameFast())) return true;
+
+        var slot = element.GetSlotFast();
+        if (slot is null || IgnoredHierarchy is null) return false;
+        return IgnoredHierarchy.IsChildOf(slot, includeSelf: true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddForCurrentStage(ProtoFluxNodeGroup group, long ticks)
+    public void AddForCurrentStage(object? obj, long ticks)
+    {
+        if (obj is IWorldElement element) AddForCurrentStage(element, ticks);
+        else if (obj is ProtoFluxNodeGroup group) AddForCurrentStage(group, ticks);
+        else if (ResoniteMod.IsDebugEnabled()) ResoniteMod.Debug($"Unknown object type: {obj?.GetType()}");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddForCurrentStage(ProtoFluxNodeGroup group, long ticks)
     {
         var world = group.World;
         if (world.Focus != World.WorldFocus.Focused) return;
@@ -56,20 +69,15 @@ internal sealed class MetricsCounter : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddForCurrentStage(IWorldElement element, long ticks)
+    private void AddForCurrentStage(IWorldElement element, long ticks)
     {
-        var world = element.World;
-        if (world.Focus != World.WorldFocus.Focused) return;
-
-        if (element.IsLocalElement || element.IsRemoved || BlackList.Contains(element.GetNameFast())) return;
-
-        var slot = (element is Slot ? element : element.Parent) as Slot;
-        if (slot is not null && IgnoredHierarchy is not null && IgnoredHierarchy.IsChildOf(slot, includeSelf: true)) return;
+        if (shouldSkip.GetOrCache(element)) return;
 
         ByElement.Add(element, ticks);
 
-        if (slot is null) return;
-        var objectRoot = slot.GetObjectRoot(true) ?? world.RootSlot;
+        var objectRoot = element.GetExactObjectRootOrWorldRootFast();
+        if (objectRoot is null) return;
+
         ByObjectRoot.Add(objectRoot, ticks);
     }
 
@@ -88,7 +96,6 @@ internal sealed class MetricsCounter : IDisposable
         {
             JsonSerializer.Serialize(writer, this, jsonSerializerOptions);
         }
-        ResoniteMod.DebugFunc(() => $"Metrics written to {Filename}");
     }
 
     public void Dispose()
@@ -99,6 +106,7 @@ internal sealed class MetricsCounter : IDisposable
 
     internal void UpdateBlacklist(IEnumerable<string> blackList)
     {
+        shouldSkip.Clear();
         BlackList = blackList.ToHashSet();
         ByElement.RemoveWhere(m => BlackList.Contains(m.Target.GetNameFast()));
         ByObjectRoot.RemoveWhere(m => BlackList.Contains(m.Target.GetNameFast()));

@@ -14,7 +14,7 @@ internal static class World_RefleshStep_Patch
         try
         {
             if (__instance.Focus != World.WorldFocus.Focused || __instance.Stage != World.RefreshStage.Connectors - 1) return;
-            ResoniteMetricsCounterMod.panel?.Update();
+            ResoniteMetricsCounterMod.Panel?.Update();
         }
         catch (Exception e)
         {

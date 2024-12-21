@@ -24,7 +24,7 @@ using ResoniteHotReloadLib;
 
 namespace ResoniteMetricsCounter;
 
-public partial class ResoniteMetricsCounterMod : ResoniteMod
+public class ResoniteMetricsCounterMod : ResoniteMod
 {
     private static Assembly ModAssembly => typeof(ResoniteMetricsCounterMod).Assembly;
 
@@ -47,8 +47,8 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly ModConfigurationKey<int> maxItemsKey = new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
-    internal static MetricsPanel? panel;
-    internal static MetricsCounter? Writer { get; private set; }
+    public static MetricsPanel? Panel { get; private set; }
+    public static MetricsCounter? Writer { get; private set; }
     private static string menuActionLabel = MENU_ACTION;
 
     public override void OnEngineInit()
@@ -101,9 +101,9 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         WorldElementHelper.Clear();
     }
 
-    private static IEnumerable<string> ParseCommaSeparatedString(string? str)
+    public static IEnumerable<string> ParseCommaSeparatedString(string? str)
     {
-        return str?.Split(',')?.Select(item => item.Trim()) ?? Enumerable.Empty<string>();
+        return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
     public static void Start()
@@ -111,7 +111,7 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
-        panel = new MetricsPanel(Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
+        Panel = new MetricsPanel(Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
         harmony.PatchCategory(Category.PROFILER);
     }
 
@@ -120,6 +120,6 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Stopping Profiler");
         harmony.UnpatchCategory(Category.PROFILER);
         Writer?.Dispose();
-        panel = null;
+        Panel = null;
     }
 }

@@ -19,15 +19,15 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         protected override string GetLabel(in StageMetric<IWorldElement> metric)
         {
             var target = metric.Target;
-            var slot = target as Slot ?? target.Parent as Slot;
+            var slot = target.GetSlotFast();
             var parent = slot?.Parent;
-            var objectRoot = slot?.GetObjectRoot(true) ?? metric.Target.World.RootSlot;
+            var objectRoot = slot?.GetExactObjectRootOrWorldRootFast() ?? target.World.RootSlot;
 
             if (parent is null)
             {
-                return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target.GetNameFast()}";
+                return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target?.GetNameFast()}";
             }
-            return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target.GetNameFast()}";
+            return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()}";
         }
 
         protected override IWorldElement GetReference(in StageMetric<IWorldElement> metric)
