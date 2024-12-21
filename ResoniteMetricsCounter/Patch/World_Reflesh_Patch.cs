@@ -11,11 +11,10 @@ internal static class World_RefleshStep_Patch
 {
     public static void Postfix(World __instance)
     {
-        if (__instance.Focus != World.WorldFocus.Focused || __instance.Stage != World.RefreshStage.Connectors - 1) return;
-
         try
         {
-            ResoniteMetricsCounterMod.panel?.Update();
+            if (__instance.Focus != World.WorldFocus.Focused || __instance.Stage != World.RefreshStage.Connectors - 1) return;
+            ResoniteMetricsCounterMod.Panel?.Update();
         }
         catch (Exception e)
         {

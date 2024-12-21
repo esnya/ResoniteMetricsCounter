@@ -1,119 +1,67 @@
 ﻿using FrooxEngine;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace ResoniteMetricsCounter.Metrics;
 
-internal enum MetricType
+/// <summary>
+/// Represents a metric that is associated with a specific target element.
+/// </summary>
+/// <typeparam name="T">The type of the target element, which must implement <see cref="IWorldElement"/>.</typeparam>
+public class Metric<T> where T : IWorldElement
 {
-    PhysicsMoved,
-    PhysicsUpdate,
-    Updates,
-    ProtoFluxContinuousChanges,
-    ProtoFluxUpdates,
-    Changes,
-    Connectors,
+    /// <summary>
+    /// Target element of the metric.
+    /// </summary>
+    [JsonInclude] public T Target { get; private set; }
+
+    /// <summary>
+    /// Ticks of the metric.
+    /// </summary>
+    [JsonInclude] public long Ticks { get; private set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Metric{T}"/> class.
+    /// </summary>
+    /// <param name="target">The target element of the metric.</param>
+    /// <param name="ticks">The initial number of ticks. Default is 0.</param>
+    public Metric(T target, long ticks = 0)
+    {
+        Target = target;
+        Ticks = ticks;
+    }
+
+    /// <summary>
+    /// Adds the specified number of ticks to the metric.
+    /// </summary>
+    /// <param name="ticks">The number of ticks to add.</param>
+    /// <throws><see cref="OverflowException"/> if the result is greater than <see cref="long.MaxValue"/>.</throws>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Add(long ticks)
+    {
+        Ticks += ticks;
+    }
 }
 
-
-#pragma warning disable CA1812
-internal sealed class SlotHierarchyConverter : JsonConverter<Slot>
+/// <summary>
+/// Represents a metric that is associated with a specific world refresh stage.
+/// </summary>
+/// <typeparam name="T">The type of the target element, which must implement <see cref="IWorldElement"/>.</typeparam>
+public sealed class StageMetric<T> : Metric<T> where T : IWorldElement
 {
-    private readonly Dictionary<Slot, string> cache = new();
+    /// <summary>
+    /// World reflesh stage of the metric.
+    /// </summary>
+    [JsonInclude] public World.RefreshStage Stage { get; private set; }
 
-    public override Slot ReadJson(JsonReader reader, Type objectType, Slot? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StageMetric{T}"/> class.
+    /// </summary>
+    /// <param name="stage">The world refresh stage of the metric.</param>
+    /// <param name="target">The target element of the metric.</param>
+    /// <param name="ticks">The initial number of ticks. Default is 0.</param>
+    public StageMetric(World.RefreshStage stage, T target, long ticks = 0) : base(target, ticks)
     {
-        throw new NotImplementedException();
-    }
-
-    public override void WriteJson(JsonWriter writer, Slot? value, JsonSerializer serializer)
-    {
-        if (value is null)
-        {
-            writer.WriteNull();
-            return;
-        }
-
-        if (cache.TryGetValue(value, out var cached))
-        {
-            writer.WriteValue(cached);
-            return;
-        }
-
-        var stringBuilder = new StringBuilder();
-
-        for (var s = value; s != null; s = s.Parent)
-        {
-            stringBuilder.Insert(0, s.Name);
-            stringBuilder.Insert(0, "/");
-        }
-
-        writer.WriteValue(cache[value] = stringBuilder.ToString());
-    }
-}
-#pragma warning restore CA1812
-
-internal struct Metric
-{
-    [JsonConverter(typeof(SlotHierarchyConverter))]
-    public Slot Slot;
-
-    public string Name;
-
-    [JsonConverter(typeof(StringEnumConverter))]
-    public MetricType Type;
-
-    public long Ticks;
-
-    public static long Frequency => Stopwatch.Frequency;
-
-
-    [JsonConverter(typeof(SlotHierarchyConverter))]
-    public readonly Slot? ObjectRoot
-    {
-        get
-        {
-            return Slot.Parent?.GetObjectRoot();
-        }
-    }
-
-    public readonly string Label
-    {
-        get
-        {
-            var parent = Slot.Parent;
-            var root = parent?.GetObjectRoot();
-
-            if (parent is null)
-            {
-                return $"{Slot.Name}.{Name}[{Type}]";
-            }
-            else if (root is null || root == parent)
-            {
-                return $"{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-            }
-
-            return $"{root.Name}/../{parent.Name}/{Slot.Name}.{Name}[{Type}]";
-        }
-    }
-
-    public override readonly int GetHashCode()
-    {
-        return Slot.ReferenceID.GetHashCode() ^ Name.GetHashCode() ^ Type.GetHashCode();
-    }
-
-    public static Metric operator +(Metric a, Metric b)
-    {
-        return new Metric
-        {
-            Slot = a.Slot,
-            Name = a.Name,
-            Type = a.Type,
-            Ticks = a.Ticks + b.Ticks,
-        };
+        Stage = stage;
     }
 }

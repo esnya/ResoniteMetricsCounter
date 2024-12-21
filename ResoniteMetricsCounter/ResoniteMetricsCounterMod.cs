@@ -12,6 +12,8 @@ using ResoniteMetricsCounter.UIX;
 
 using ResoniteModLoader;
 using FrooxEngine;
+using ResoniteMetricsCounter.Utils;
+
 
 
 
@@ -22,7 +24,7 @@ using ResoniteHotReloadLib;
 
 namespace ResoniteMetricsCounter;
 
-public partial class ResoniteMetricsCounterMod : ResoniteMod
+public class ResoniteMetricsCounterMod : ResoniteMod
 {
     private static Assembly ModAssembly => typeof(ResoniteMetricsCounterMod).Assembly;
 
@@ -45,8 +47,9 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly ModConfigurationKey<int> maxItemsKey = new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
-    internal static MetricsPanel? panel;
-    internal static MetricsCounter? Writer { get; private set; }
+    public static MetricsPanel? Panel { get; private set; }
+    public static MetricsCounter? Writer { get; private set; }
+    private static string menuActionLabel = MENU_ACTION;
 
     public override void OnEngineInit()
     {
@@ -62,7 +65,13 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
 
-        DevCreateNewForm.AddAction("/Editor", MENU_ACTION, (_) => Start());
+        Engine.Current.WorldManager.WorldFocused += OnWorldFocused;
+
+#if DEBUG
+        menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+#endif
+
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, (_) => Start());
     }
 #if DEBUG
 
@@ -72,24 +81,29 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         {
             Stop();
             harmony.UnpatchCategory(Category.CORE);
-            HotReloader.RemoveMenuOption("/Editor", MENU_ACTION);
+            HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
+            Engine.Current.WorldManager.WorldFocused -= OnWorldFocused;
         }
         catch (System.Exception e)
         {
             Error(e);
         }
     }
-#endif
-
-    private static IEnumerable<string> ParseCommaSeparatedString(string? str)
-    {
-        return str?.Split(',')?.Select(item => item.Trim()) ?? Enumerable.Empty<string>();
-    }
-
 
     public static void OnHotReload(ResoniteMod modInstance)
     {
         Init(modInstance);
+    }
+#endif
+
+    private static void OnWorldFocused(World world)
+    {
+        WorldElementHelper.Clear();
+    }
+
+    public static IEnumerable<string> ParseCommaSeparatedString(string? str)
+    {
+        return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
     public static void Start()
@@ -97,7 +111,7 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
-        panel = new MetricsPanel(Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
+        Panel = new MetricsPanel(Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
         harmony.PatchCategory(Category.PROFILER);
     }
 
@@ -106,6 +120,6 @@ public partial class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Stopping Profiler");
         harmony.UnpatchCategory(Category.PROFILER);
         Writer?.Dispose();
-        panel = null;
+        Panel = null;
     }
 }

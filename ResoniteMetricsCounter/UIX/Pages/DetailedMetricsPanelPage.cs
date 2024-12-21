@@ -2,6 +2,7 @@
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
+using ResoniteMetricsCounter.Utils;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,23 +10,32 @@ namespace ResoniteMetricsCounter.UIX.Pages;
 
 internal sealed class DetailedMetricsPanelPage : IMetricsPage
 {
-    private sealed class Item : MetricItemBase<Metric>
+    private sealed class Item : MetricItemBase<StageMetric<IWorldElement>>
     {
         public Item(Slot container) : base(container)
         {
         }
 
-        protected override string GetLabel(in Metric metric)
+        protected override string GetLabel(in StageMetric<IWorldElement> metric)
         {
-            return metric.Label;
+            var target = metric.Target;
+            var slot = target.GetSlotFast();
+            var parent = slot?.Parent;
+            var objectRoot = slot?.GetExactObjectRootOrWorldRootFast() ?? target.World.RootSlot;
+
+            if (parent is null)
+            {
+                return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target?.GetNameFast()}";
+            }
+            return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()}";
         }
 
-        protected override Slot GetReference(in Metric metric)
+        protected override IWorldElement GetReference(in StageMetric<IWorldElement> metric)
         {
-            return metric.Slot;
+            return metric.Target;
         }
 
-        protected override long GetTicks(in Metric metric)
+        protected override long GetTicks(in StageMetric<IWorldElement> metric)
         {
             return metric.Ticks;
         }
@@ -44,13 +54,12 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         container = uiBuilder.VerticalLayout(spacing: 8).Slot;
     }
 
-
     public void Update(in MetricsCounter metricsCounter, int maxItems)
     {
         if (container is null || container.IsDisposed) return;
 
-        var maxTicks = metricsCounter.MaxTicks;
-        var totalTicks = metricsCounter.TotalTicks;
+        var maxTicks = metricsCounter.ByElement.Max;
+        var totalTicks = metricsCounter.ByElement.Total;
 
         if (items?.Count != maxItems)
         {
@@ -65,13 +74,13 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         }
 
         var i = 0;
-        foreach (var metric in metricsCounter.Metrics.Values.OrderByDescending(a => a.Ticks).Take(maxItems))
+        foreach (var metric in metricsCounter.ByElement.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
             var item = items[i] ?? (items[i] = new Item(container!));
 
             if (!item.Update(metric, maxTicks, totalTicks))
             {
-                metricsCounter.Remove(metric);
+                metricsCounter.ByElement.Remove(metric.Target);
             }
             i++;
         }

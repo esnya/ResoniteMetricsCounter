@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ResoniteMetricsCounter.UIX;
-internal sealed class MetricsPanel
+public sealed class MetricsPanel
 {
 
     private readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
@@ -17,8 +17,8 @@ internal sealed class MetricsPanel
         new("ObjectRoot", new ObjectRootPage()),
     };
 
-    public static float DEFAULT_ITEM_SIZE = 32;
-    public static float PADDING = 4;
+    public const float DEFAULTITEMSIZE = 32;
+    public const float PADDING = 4;
 
     private readonly MetricsCounter metricsCounter;
     private readonly Slot slot;
@@ -29,6 +29,8 @@ internal sealed class MetricsPanel
 
     public MetricsPanel(MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
+        if (metricsCounter is null) throw new ArgumentNullException(nameof(metricsCounter));
+
         this.maxItems = maxItems;
         this.metricsCounter = metricsCounter;
 
@@ -62,7 +64,7 @@ internal sealed class MetricsPanel
         foreach (var keyValuePair in pages)
         {
             uiBuilder.NestInto(pagesContainer);
-            BuildPageUI<DetailedMetricsPanelPage>(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
+            BuildPageUI(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
         }
     }
 
@@ -77,7 +79,7 @@ internal sealed class MetricsPanel
 
         var uiBuilder = RadiantUI_Panel.SetupPanel(slot, "Metrics", size, pinButton: true);
         uiBuilder.Style.TextAutoSizeMin = 0;
-        uiBuilder.Style.MinHeight = DEFAULT_ITEM_SIZE;
+        uiBuilder.Style.MinHeight = DEFAULTITEMSIZE;
         uiBuilder.Style.ForceExpandHeight = false;
 
         return uiBuilder;
@@ -137,7 +139,7 @@ internal sealed class MetricsPanel
         };
     }
 
-    private static void BuildPageUI<T>(UIBuilder uiBuilder, in IMetricsPage page, in string label, bool active) where T : IMetricsPage, new()
+    private static void BuildPageUI(UIBuilder uiBuilder, in IMetricsPage page, in string label, bool active)
     {
         var slot = uiBuilder.Next(label);
         slot.ActiveSelf = active;
@@ -158,11 +160,8 @@ internal sealed class MetricsPanel
     {
         if (slot?.IsDisposed ?? true) return;
 
-        var totalTicks = metricsCounter.TotalTicks;
-        var maxTicks = metricsCounter.MaxTicks;
-
         if (statisticsField.IsDisposed) return;
-        statisticsField.Value = $"Total:\t{1000.0 * totalTicks / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * maxTicks / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.Metrics.Count}";
+        statisticsField.Value = $"Total:\t{1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.ByElement.Count}";
 
         foreach (var page in pages)
         {

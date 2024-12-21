@@ -1,104 +1,124 @@
 ﻿using Elements.Core;
 using FrooxEngine;
-using Newtonsoft.Json;
+using FrooxEngine.ProtoFlux;
+using ResoniteMetricsCounter.Serialization;
+using ResoniteMetricsCounter.Utils;
+using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ResoniteMetricsCounter.Metrics;
 
-internal sealed class MetricsCounter : IDisposable
+
+public sealed class MetricsCounter : IDisposable
 {
-    internal Dictionary<int, Metric> Metrics = new();
-    private readonly string filename;
-    private HashSet<string> blackList;
-    private Slot? ignoredHierarchy;
-    internal long TotalTicks
-    {
-        get;
-        private set;
-    }
-    internal long MaxTicks
-    {
-        get;
-        private set;
-    }
+    private readonly CachedElementValue<IWorldElement, bool> shouldSkip;
+
+    [JsonInclude] public Slot? IgnoredHierarchy { get; private set; }
+    internal bool IsDisposed { get; private set; }
+
+    [JsonInclude] public string Filename { get; private set; }
+    [JsonInclude] public VersionNumber EngineVersion { get; private set; }
+    [JsonInclude] public HashSet<string> BlackList { get; private set; }
+
+    [JsonInclude] public MetricsByStageStorage<IWorldElement> ByElement { get; private set; } = new();
+    [JsonInclude] public MetricsStorage<Slot> ByObjectRoot { get; private set; } = new();
 
     public MetricsCounter(IEnumerable<string> blackList)
     {
-        filename = UniLog.GenerateLogName(Engine.VersionNumber, "-trace").Replace(".log", ".json");
-        this.blackList = blackList.ToHashSet();
+        shouldSkip = new(ShouldSkipImpl);
+
+        EngineVersion = Engine.Version;
+        Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json");
+        BlackList = blackList.ToHashSet();
+    }
+
+    private bool ShouldSkipImpl(IWorldElement element)
+    {
+        if (element.World.Focus != World.WorldFocus.Focused) return true;
+        if (element.IsLocalElement || element.IsRemoved || BlackList.Contains(element.GetNameFast())) return true;
+
+        var slot = element.GetSlotFast();
+        if (slot is null || IgnoredHierarchy is null) return false;
+        return IgnoredHierarchy.IsChildOf(slot, includeSelf: true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Add(string name, Slot slot, long ticks, MetricType type)
+    public void AddForCurrentStage(object? obj, long ticks)
     {
-        Add(new Metric()
-        {
-            Slot = slot,
-            Name = name,
-            Ticks = ticks,
-            Type = type
-        });
+        if (obj is IWorldElement element) AddForCurrentStage(element, ticks);
+        else if (obj is ProtoFluxNodeGroup group) AddForCurrentStage(group, ticks);
+        else if (ResoniteMod.IsDebugEnabled()) ResoniteMod.Debug($"Unknown object type: {obj?.GetType()}");
     }
 
-    public void Add(in Metric metric)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddForCurrentStage(ProtoFluxNodeGroup group, long ticks)
     {
-        if (metric.Ticks == 0 || blackList.Contains(metric.Name) || (ignoredHierarchy is not null && metric.Slot.IsChildOf(ignoredHierarchy, includeSelf: true))) return;
+        var world = group.World;
+        if (world.Focus != World.WorldFocus.Focused) return;
 
-        TotalTicks += metric.Ticks;
+        var node = group.Nodes.FirstOrDefault();
+        if (node is null) return;
 
-        var id = metric.GetHashCode();
-        if (Metrics.TryGetValue(id, out var prevValue))
-        {
-            Metrics[id] = prevValue + metric;
-        }
-        else
-        {
-            Metrics[id] = metric;
-        }
-
-        var ticks = Metrics[id].Ticks;
-        if (ticks > MaxTicks)
-        {
-            MaxTicks = ticks;
-        }
+        AddForCurrentStage(node, ticks);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddForCurrentStage(IWorldElement element, long ticks)
+    {
+        if (shouldSkip.GetOrCache(element)) return;
+
+        ByElement.Add(element, ticks);
+
+        var objectRoot = element.GetExactObjectRootOrWorldRootFast();
+        if (objectRoot is null) return;
+
+        ByObjectRoot.Add(objectRoot, ticks);
+    }
+
+    private static readonly JsonSerializerOptions jsonSerializerOptions = new()
+    {
+        WriteIndented = true,
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
+        Converters = { new IWorldElementConverter(), new JsonStringEnumConverter<World.RefreshStage>() },
+    };
 
     public void Flush()
     {
-        var serializer = new JsonSerializer();
-        var streamWriter = new StreamWriter(filename, append: true);
-        serializer.Serialize(streamWriter, Metrics);
-        streamWriter.Close();
+        ResoniteMod.DebugFunc(() => $"Writing metrics to {Filename}");
+        using (var writer = new FileStream(Filename, FileMode.Create))
+        {
+            JsonSerializer.Serialize(writer, this, jsonSerializerOptions);
+        }
     }
 
     public void Dispose()
     {
+        IsDisposed = true;
         Flush();
     }
 
     internal void UpdateBlacklist(IEnumerable<string> blackList)
     {
-        this.blackList = blackList.ToHashSet();
-        foreach (var metric in Metrics.Values)
-        {
-            if (this.blackList.Contains(metric.Name))
-            {
-                Metrics.Remove(metric.GetHashCode());
-            }
-        }
+        shouldSkip.Clear();
+        BlackList = blackList.ToHashSet();
+        ByElement.RemoveWhere(m => BlackList.Contains(m.Target.GetNameFast()));
+        ByObjectRoot.RemoveWhere(m => BlackList.Contains(m.Target.GetNameFast()));
     }
 
-    internal void Remove(in Metric metric)
+    internal void Remove(Slot slot)
     {
-        Metrics.Remove(metric.GetHashCode());
+        ByObjectRoot.Remove(slot);
     }
 
     internal void IgnoreHierarchy(Slot slot)
     {
-        ignoredHierarchy = slot;
+        IgnoredHierarchy = slot;
     }
 }
