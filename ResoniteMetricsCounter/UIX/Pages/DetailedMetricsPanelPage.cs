@@ -30,9 +30,9 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
             return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()}";
         }
 
-        protected override IWorldElement GetReference(in StageMetric<IWorldElement> metric)
+        protected override IWorldElement? GetReference(in StageMetric<IWorldElement> metric)
         {
-            return metric.Target;
+            return metric.Target.GetSlotFast();
         }
 
         protected override long GetTicks(in StageMetric<IWorldElement> metric)
