@@ -1,0 +1,35 @@
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+
+jobs:
+  version:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
+
+        - name: Retrieve previous version from csproj
+          id: get_version
+          run: |
+            FILE=$(find . -name "*.csproj" | head -n 1)
+            VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" $FILE)
+            echo "previousVersion=$VERSION" >> $GITHUB_OUTPUT
+
+        - name: Set version in csproj
+          run: |
+            FILE=$(find . -name "*.csproj" | head -n 1)
+            sed -i "s/>${{ steps.get_version.outputs.previousVersion }}/>${{ github.event.inputs.version }}/" $FILE
+
+        - name: Commit changes
+          run: |
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore: 📦️ v${{ github.event.inputs.version }}"
+            git push
