@@ -1,3 +1,5 @@
+name: Version
+
 on:
   workflow_dispatch:
     inputs:
