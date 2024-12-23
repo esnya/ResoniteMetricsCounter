@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release'
+        description: 'Version to release "MAJOR.MINOR.PATCH.REVISION"'
         required: true
 
 jobs:
@@ -28,10 +28,17 @@ jobs:
             FILE=$(find . -name "*.csproj" | head -n 1)
             sed -i "s/>${{ steps.get_version.outputs.previousVersion }}/>${{ github.event.inputs.version }}/" $FILE
 
+        - name: Create tag
+          run: |
+            git tag -v${{ github.event.inputs.version }}
         - name: Commit changes
           run: |
             git config --local user.name "github-actions[bot]"
             git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add .
             git commit -m "chore: 📦️ v${{ github.event.inputs.version }}"
+
+        - name: Push changes
+          run: |
             git push
+            git push --tags
