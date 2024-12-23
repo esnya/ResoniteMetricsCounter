@@ -65,7 +65,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
 
-        Engine.Current.WorldManager.WorldFocused += OnWorldFocused;
 
 #if DEBUG
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
@@ -82,7 +81,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             Stop();
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
-            Engine.Current.WorldManager.WorldFocused -= OnWorldFocused;
         }
         catch (System.Exception e)
         {
@@ -96,10 +94,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     }
 #endif
 
-    private static void OnWorldFocused(World world)
-    {
-        WorldElementHelper.Clear();
-    }
 
     public static IEnumerable<string> ParseCommaSeparatedString(string? str)
     {
@@ -120,6 +114,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Stopping Profiler");
         harmony.UnpatchCategory(Category.PROFILER);
         Writer?.Dispose();
+        WorldElementHelper.Clear();
         Panel = null;
     }
 }
