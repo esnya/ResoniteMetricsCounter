@@ -28,12 +28,9 @@ internal static class WorldElementHelper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override Slot? GetValue(in IWorldElement source)
         {
-            if (source is not Slot slot)
-            {
-                return null;
-            }
+            var slot = source.GetSlotFast();
 
-            return slot.GetObjectRoot(true) ?? slot.World.RootSlot;
+            return slot?.GetObjectRoot(true) ?? slot?.World.RootSlot;
 
         }
     }
