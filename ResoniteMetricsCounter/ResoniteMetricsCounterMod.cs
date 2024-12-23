@@ -71,7 +71,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
 #endif
 
-        DevCreateNewForm.AddAction("/Editor", menuActionLabel, (_) => Start());
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, Start);
     }
 #if DEBUG
 
@@ -106,12 +106,12 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
-    public static void Start()
+    public static void Start(Slot slot)
     {
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
-        Panel = new MetricsPanel(Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
+        Panel = new MetricsPanel(slot, Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
         harmony.PatchCategory(Category.PROFILER);
     }
 
