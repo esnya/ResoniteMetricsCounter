@@ -27,16 +27,16 @@ public sealed class MetricsPanel
     private readonly Slot? pagesButtonContainer;
     private readonly Slot? pagesContainer;
 
-    public MetricsPanel(MetricsCounter metricsCounter, in float2 size, int maxItems)
+    public MetricsPanel(Slot slot, MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
+        if (slot is null) throw new ArgumentNullException(nameof(slot));
         if (metricsCounter is null) throw new ArgumentNullException(nameof(metricsCounter));
 
         this.maxItems = maxItems;
         this.metricsCounter = metricsCounter;
 
-        var uiBuilder = CreatePanel(size);
-        slot = uiBuilder.Root;
-        if (slot is null) throw new InvalidOperationException("Slot is null");
+        var uiBuilder = CreatePanel(slot, size);
+        this.slot = uiBuilder.Root;
         metricsCounter.IgnoreHierarchy(slot);
 
         uiBuilder.VerticalLayout(PADDING, forceExpandHeight: false);
@@ -68,14 +68,13 @@ public sealed class MetricsPanel
         }
     }
 
-    private static UIBuilder CreatePanel(in float2 size)
+    private static UIBuilder CreatePanel(in Slot slot, in float2 size)
     {
-        var slot = Engine.Current.WorldManager.FocusedWorld.LocalUserSpace.AddSlot("Resonite Profile Metrics", persistent: false);
+        slot.PersistentSelf = true;
         slot.OnPrepareDestroy += (_) => ResoniteMetricsCounterMod.Stop();
+
         slot.Tag = "Developer";
         slot.LocalScale = float3.One * 0.00075f;
-        slot.PositionInFrontOfUser();
-        slot.GlobalRotation = slot.LocalUserRoot.ViewRotation;
 
         var uiBuilder = RadiantUI_Panel.SetupPanel(slot, "Metrics", size, pinButton: true);
         uiBuilder.Style.TextAutoSizeMin = 0;
