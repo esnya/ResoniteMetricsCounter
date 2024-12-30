@@ -23,22 +23,24 @@ internal static class WorldElementHelper
         }
     }
 
-    private sealed class ExactObjectRootOrWorldRoot : CachedElementValueBase<IWorldElement, Slot?>
+    private sealed class CachedGetMetricObjectRoot : CachedElementValueBase<IWorldElement, Slot?>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override Slot? GetValue(in IWorldElement source)
         {
             var slot = source.GetSlotFast();
+            var localUserSlot = slot?.ActiveUserRoot?.Slot;
+
+            if (slot == localUserSlot) return slot;
 
             return slot?.GetObjectRoot(true) ?? slot?.World.RootSlot;
-
         }
     }
 
 
     private static readonly CachedElementName nameCache = new();
     private static readonly CachedElementSlot slotCache = new();
-    private static readonly ExactObjectRootOrWorldRoot exactObjectRootOrWorldRootCache = new();
+    private static readonly CachedGetMetricObjectRoot getMetricObjectRooCachet = new();
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,15 +54,15 @@ internal static class WorldElementHelper
         return slotCache.GetOrCache(element);
     }
 
-    public static Slot? GetExactObjectRootOrWorldRootFast(this IWorldElement element)
+    public static Slot? GetMetricObjectRoot(this IWorldElement element)
     {
-        return exactObjectRootOrWorldRootCache.GetOrCache(element);
+        return getMetricObjectRooCachet.GetOrCache(element);
     }
 
     public static void Clear()
     {
         nameCache.Clear();
         slotCache.Clear();
-        exactObjectRootOrWorldRootCache.Clear();
+        getMetricObjectRooCachet.Clear();
     }
 }
