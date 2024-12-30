@@ -84,10 +84,13 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
 
     public void Update(in MetricsCounter metricsCounter, int maxItems)
     {
-        if (container is null || container.IsDisposed) return;
+        if (container is null || container.IsDisposed)
+        {
+            return;
+        }
 
         var maxTicks = metricsCounter.ByElement.Max;
-        var totalTicks = metricsCounter.ByElement.Total;
+        var elapsedTicks = metricsCounter.ElapsedTicks;
 
         if (items?.Count != maxItems)
         {
@@ -106,7 +109,7 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         {
             var item = items[i] ?? (items[i] = new Item(container!, labelCache));
 
-            if (!item.Update(metric, maxTicks, totalTicks))
+            if (!item.Update(metric, maxTicks, elapsedTicks))
             {
                 metricsCounter.ByElement.Remove(metric.Target);
             }

@@ -6,6 +6,7 @@ using ResoniteMetricsCounter.Utils;
 using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -29,6 +30,11 @@ public sealed class MetricsCounter : IDisposable
     [JsonInclude] public MetricsByStageStorage<IWorldElement> ByElement { get; private set; } = new();
     [JsonInclude] public MetricsStorage<Slot> ByObjectRoot { get; private set; } = new();
 
+    private readonly Stopwatch stopwatch = new();
+
+    [JsonInclude] public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
+    public long ElapsedTicks => stopwatch.ElapsedTicks;
+
     public MetricsCounter(IEnumerable<string> blackList)
     {
         shouldSkip = new(ShouldSkipImpl);
@@ -36,6 +42,8 @@ public sealed class MetricsCounter : IDisposable
         EngineVersion = Engine.Version;
         Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json");
         BlackList = blackList.ToHashSet();
+
+        stopwatch.Start();
     }
 
     private bool ShouldSkipImpl(IWorldElement element)
@@ -132,6 +140,7 @@ public sealed class MetricsCounter : IDisposable
     public void Dispose()
     {
         IsDisposed = true;
+        stopwatch.Stop();
         Flush();
     }
 
