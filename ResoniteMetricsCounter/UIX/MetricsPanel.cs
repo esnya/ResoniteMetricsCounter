@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
@@ -115,7 +115,6 @@ public sealed class MetricsPanel
 
     private void BuildPageButtonUI(in UIBuilder uiBuilder, string label, bool defaultActive)
     {
-
         uiBuilder.Style.FlexibleWidth = defaultActive ? 3.0f : 1.0f;
         uiBuilder.Style.PreferredWidth = 0.0f;
 
