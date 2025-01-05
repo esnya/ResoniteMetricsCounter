@@ -30,7 +30,7 @@ jobs:
 
         - name: Create tag
           run: |
-            git tag -v${{ github.event.inputs.version }}
+            git tag v${{ github.event.inputs.version }}
         - name: Commit changes
           run: |
             git config --local user.name "github-actions[bot]"
