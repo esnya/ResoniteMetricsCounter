@@ -35,6 +35,8 @@ public sealed class MetricsCounter : IDisposable
     [JsonInclude] public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
     public long ElapsedTicks => stopwatch.ElapsedTicks;
 
+    [JsonInclude] public int FrameCount { get; private set; }
+
     public MetricsCounter(IEnumerable<string> blackList)
     {
         shouldSkip = new(ShouldSkipImpl);
@@ -48,8 +50,7 @@ public sealed class MetricsCounter : IDisposable
 
     private bool ShouldSkipImpl(IWorldElement element)
     {
-        var world = element.World;
-        if (world.Focus != World.WorldFocus.Focused || !ResoniteMetricsCounterMod.CollectStage(world.Stage))
+        if (element.World.Focus != World.WorldFocus.Focused)
         {
             return true;
         }
@@ -119,7 +120,10 @@ public sealed class MetricsCounter : IDisposable
             return;
         }
 
-        ByObjectRoot.Add(objectRoot, ticks);
+        for (var slot = objectRoot; slot != null; slot = slot.Parent?.GetMetricObjectRoot())
+        {
+            ByObjectRoot.Add(slot, ticks);
+        }
     }
 
     private static readonly JsonSerializerOptions jsonSerializerOptions = new()
@@ -160,5 +164,10 @@ public sealed class MetricsCounter : IDisposable
     internal void IgnoreHierarchy(Slot slot)
     {
         IgnoredHierarchy = slot;
+    }
+
+    internal void OnUpdate()
+    {
+        FrameCount++;
     }
 }

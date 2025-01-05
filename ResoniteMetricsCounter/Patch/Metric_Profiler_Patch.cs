@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteModLoader;
@@ -10,8 +10,8 @@ using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.Patch;
 
-[HarmonyPatch]
-[HarmonyPatchCategory(Category.PROFILER)]
+#pragma warning disable CA1859
+
 internal static class Metric_Profiler_Patch
 {
     private static readonly Stopwatch stopwatch = new();
@@ -29,101 +29,116 @@ internal static class Metric_Profiler_Patch
         ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(element, stopwatch.ElapsedTicks);
     }
 
+    [HarmonyPatchCategory("ProtoFluxUpdates")]
     [HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunNodeUpdates))]
-    [HarmonyTranspiler]
-    internal static IEnumerable<CodeInstruction> RunNodeUpdatesTranspiler(IEnumerable<CodeInstruction> instructions)
+    private static class RunNodeUpdates_Patch
     {
-        ResoniteMod.Debug("Patching method for ProtoFluxUpdates");
-        var matcher = new CodeMatcher(instructions)
-            .MatchStartForward(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeUpdates()))
-            .ThrowIfNotMatchForward("Failed to match RunNodeUpdates call")
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => StartTimer()),
-                new CodeInstruction(OpCodes.Dup)
-            )
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => Record(default!))
-            );
-        return matcher.Instructions();
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            ResoniteMod.Debug("Patching method for ProtoFluxUpdates");
+            var matcher = new CodeMatcher(instructions)
+                .MatchStartForward(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeUpdates()))
+                .ThrowIfNotMatchForward("Failed to match RunNodeUpdates call")
+                .InsertAndAdvance(
+                    CodeInstruction.Call(() => StartTimer()),
+                    new CodeInstruction(OpCodes.Dup)
+                )
+                .Advance(1)
+                .InsertAndAdvance(
+                    CodeInstruction.Call(() => Record(default!))
+                );
+            return matcher.Instructions();
+        }
     }
 
+    [HarmonyPatchCategory("ProtoFluxContinuousChanges")]
     [HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunContinuousChanges))]
-    [HarmonyTranspiler]
-    internal static IEnumerable<CodeInstruction> RunContinuousChangesTranspiler(IEnumerable<CodeInstruction> instructions)
+    private static class RunContinuousChanges_Patch
     {
-        ResoniteMod.Debug("Patching method for ProtoFluxContinuousChanges");
-        var matcher = new CodeMatcher(instructions)
-            .MatchStartForward(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges()))
-            .ThrowIfNotMatchForward("Failed to match RunContinuousChanges call")
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => StartTimer()),
-                new CodeInstruction(OpCodes.Dup)
-            )
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => Record(default!))
-            );
 
-        return matcher.Instructions();
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            ResoniteMod.Debug("Patching method for ProtoFluxContinuousChanges");
+            var matcher = new CodeMatcher(instructions)
+                .MatchStartForward(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges()))
+                .ThrowIfNotMatchForward("Failed to match RunContinuousChanges call")
+                .InsertAndAdvance(
+                    CodeInstruction.Call(() => StartTimer()),
+                    new CodeInstruction(OpCodes.Dup)
+                )
+                .Advance(1)
+                .InsertAndAdvance(
+                    CodeInstruction.Call(() => Record(default!))
+                );
+
+            return matcher.Instructions();
+        }
     }
+
+    [HarmonyPatchCategory("Updates")]
 
     [HarmonyPatch(typeof(UpdateManager), nameof(UpdateManager.RunUpdates))]
-    [HarmonyTranspiler]
-    internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    private static class RunUpdates_Patch
     {
-        ResoniteMod.Debug("Patching method for Updates");
-        var matcher = new CodeMatcher(instructions)
-            .MatchStartForward(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunUpdate()))
-            .ThrowIfNotMatchForward("Failed to match InternalRunUpdate call")
-            .InsertAndAdvance(
-                new CodeInstruction(OpCodes.Dup),
-                CodeInstruction.Call(() => StartTimer())
-            )
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => Record(default!))
-            );
-
-        return matcher.Instructions();
-    }
-
-    [HarmonyPatch(typeof(UpdateManager), "ProcessChange")]
-    [HarmonyTranspiler]
-    internal static IEnumerable<CodeInstruction> ProcessChangeTranspiler(IEnumerable<CodeInstruction> instructions)
-    {
-        ResoniteMod.Debug("Patching method for Changes");
-        var matcher = new CodeMatcher(instructions)
-            .MatchStartForward(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunApplyChanges(default)))
-            .ThrowIfNotMatchForward("Failed to match InternalRunApplyChanges call")
-            .InsertAndAdvance(CodeInstruction.Call(() => StartTimer()))
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.LoadArgument(1),
-                CodeInstruction.Call(() => Record(default!))
-            );
-        return matcher.Instructions();
-    }
-
-    [HarmonyPatch(typeof(UpdateManager), "ProcessConnectorUpdate")]
-    [HarmonyTranspiler]
-    internal static IEnumerable<CodeInstruction> ProcessConnectorUpdateTranspiler(IEnumerable<CodeInstruction> instructions)
-    {
-        ResoniteMod.Debug("Patching method for Connectors");
-        var matcher = new CodeMatcher(instructions)
-            .MatchStartForward(CodeMatch.Calls(() => default(IImplementable)!.InternalUpdateConnector()))
-            .ThrowIfNotMatchForward("Failed to match InternalUpdateConnector call")
-            .InsertAndAdvance(CodeInstruction.Call(() => StartTimer()))
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.LoadArgument(1),
-                CodeInstruction.Call(() => Record(default!)
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            ResoniteMod.Debug("Patching method for Updates");
+            var matcher = new CodeMatcher(instructions)
+                .MatchStartForward(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunUpdate()))
+                .ThrowIfNotMatchForward("Failed to match InternalRunUpdate call")
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Dup),
+                    CodeInstruction.Call(() => StartTimer())
                 )
-            );
-        return matcher.Instructions();
+                .Advance(1)
+                .InsertAndAdvance(
+                    CodeInstruction.Call(() => Record(default!))
+                );
+            return matcher.Instructions();
+        }
     }
 
-    [HarmonyPatchCategory(Category.PROFILER)]
+    [HarmonyPatchCategory(nameof(World.RefreshStage.Changes))]
+    [HarmonyPatch(typeof(UpdateManager), "ProcessChange")]
+    private static class ProcessChange_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            ResoniteMod.Debug("Patching method for Changes");
+            var matcher = new CodeMatcher(instructions)
+                .MatchStartForward(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunApplyChanges(default)))
+                .ThrowIfNotMatchForward("Failed to match InternalRunApplyChanges call")
+                .InsertAndAdvance(CodeInstruction.Call(() => StartTimer()))
+                .Advance(1)
+                .InsertAndAdvance(
+                    CodeInstruction.LoadArgument(1),
+                    CodeInstruction.Call(() => Record(default!))
+                );
+            return matcher.Instructions();
+        }
+    }
+
+    [HarmonyPatchCategory("Connectors")]
+    [HarmonyPatch(typeof(UpdateManager), "ProcessConnectorUpdate")]
+    private static class ProcessConnectorUpdate_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            ResoniteMod.Debug("Patching method for Connectors");
+            var matcher = new CodeMatcher(instructions)
+                .MatchStartForward(CodeMatch.Calls(() => default(IImplementable)!.InternalUpdateConnector()))
+                .ThrowIfNotMatchForward("Failed to match InternalUpdateConnector call")
+                .InsertAndAdvance(CodeInstruction.Call(() => StartTimer()))
+                .Advance(1)
+                .InsertAndAdvance(
+                    CodeInstruction.LoadArgument(1),
+                    CodeInstruction.Call(() => Record(default!))
+                );
+            return matcher.Instructions();
+        }
+    }
+
+    [HarmonyPatchCategory("PhysicsMoved")]
     [HarmonyPatch]
     internal static class PhysicsMovedHierarchyEventManager_RunMovedEvent_Patch
     {
