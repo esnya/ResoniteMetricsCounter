@@ -4,58 +4,29 @@ using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
 using ResoniteMetricsCounter.Utils;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ResoniteMetricsCounter.UIX.Pages;
 
 internal sealed class DetailedMetricsPanelPage : IMetricsPage
 {
-    private sealed class LabelValueCache : CachedValueBase<StageMetric<IWorldElement>, int, string>
-    {
-        protected override int GetKey(in StageMetric<IWorldElement> metric)
-        {
-            return metric.Stage.GetHashCode() ^ metric.Target.ReferenceID.GetHashCode();
-        }
-
-        protected override string GetValue(in StageMetric<IWorldElement> metric)
-        {
-            var target = metric.Target;
-            var slot = target.GetSlotFast();
-            var parent = slot?.Parent;
-            var objectRoot = slot?.GetMetricObjectRoot() ?? target.World.RootSlot;
-
-            if (parent is null)
-            {
-                return $"{objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
-            }
-
-            if (slot == objectRoot)
-            {
-                return $"{objectRoot.GetNameFast()} {parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
-            }
-
-            if (parent == objectRoot)
-            {
-                return $"{objectRoot.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
-            }
-            return $"{objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
-        }
-    }
-
-    private readonly LabelValueCache labelCache = new();
+    private static List<IMetricsPage.ColumnDefinition> Columns => new() {
+            new("Object Root", flexWidth: 1.0f),
+            new("Parent", flexWidth: 1.0f),
+            new("Slot", flexWidth: 1.0f),
+            new("Component", flexWidth: 1.0f),
+            new("Stage", flexWidth: 0.5f),
+            new("Time", minWidth: 32*3),
+            new("%", minWidth: 32*3),
+    };
 
     private sealed class Item : MetricItemBase<StageMetric<IWorldElement>>
     {
-        private readonly LabelValueCache labelCache;
+        protected override List<IMetricsPage.ColumnDefinition> Columns => DetailedMetricsPanelPage.Columns;
 
-        public Item(Slot container, LabelValueCache labelValueCache) : base(container)
+        public Item(Slot container) : base(container)
         {
-            labelCache = labelValueCache;
-        }
-
-        protected override string GetLabel(in StageMetric<IWorldElement> metric)
-        {
-            return labelCache.GetOrCache(metric);
         }
 
         protected override IWorldElement? GetReference(in StageMetric<IWorldElement> metric)
@@ -67,7 +38,36 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         {
             return metric.Ticks;
         }
+        protected override void UpdateColumn(in StageMetric<IWorldElement> metric, Sync<string> column, int i, long maxTicks, long totalTicks, long frameCount)
+        {
+            switch (i)
+            {
+                case 0:
+                    column.Value = metric.Target.GetMetricObjectRoot()?.Name!;
+                    break;
+                case 1:
+                    column.Value = metric.Target.GetSlotFast()?.Parent?.Name!;
+                    break;
+                case 2:
+                    column.Value = metric.Target.GetSlotFast()?.Name!;
+                    break;
+                case 3:
+                    column.Value = metric.Target.Name;
+                    break;
+                case 4:
+                    column.Value = $"{metric.Stage}";
+                    break;
+                case 5:
+                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.00}ms";
+                    break;
+                case 6:
+                    column.Value = $"{(double)metric.Ticks / totalTicks:0.000%}";
+                    break;
+            }
+        }
     }
+
+
 
     private Slot? container;
     private List<Item?>? items;
@@ -80,6 +80,21 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
     public void BuildUI(UIBuilder uiBuilder)
     {
         container = uiBuilder.VerticalLayout(spacing: 8).Slot;
+
+        uiBuilder.PushStyle();
+
+        var hori = uiBuilder.HorizontalLayout();
+        hori.Slot.OrderOffset = long.MinValue;
+
+        foreach (var column in Columns)
+        {
+            uiBuilder.Style.FlexibleWidth = column.FlexWidth;
+            uiBuilder.Style.MinWidth = column.MinWidth;
+            uiBuilder.Text(column.Label);
+        }
+        uiBuilder.NestOut();
+
+        uiBuilder.PopStyle();
     }
 
     public void Update(in MetricsCounter metricsCounter, int maxItems)
@@ -90,7 +105,8 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         }
 
         var maxTicks = metricsCounter.ByElement.Max;
-        var elapsedTicks = metricsCounter.ElapsedTicks;
+        var totalTicks = metricsCounter.ByElement.Total;
+        var frameCount = metricsCounter.FrameCount;
 
         if (items?.Count != maxItems)
         {
@@ -107,9 +123,9 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         var i = 0;
         foreach (var metric in metricsCounter.ByElement.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
-            var item = items[i] ?? (items[i] = new Item(container!, labelCache));
+            var item = items[i] ?? (items[i] = new Item(container));
 
-            if (!item.Update(metric, maxTicks, elapsedTicks))
+            if (!item.Update(metric, maxTicks, totalTicks, frameCount))
             {
                 metricsCounter.ByElement.Remove(metric.Target);
             }

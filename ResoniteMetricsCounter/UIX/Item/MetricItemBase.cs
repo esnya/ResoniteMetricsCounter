@@ -1,7 +1,8 @@
 ﻿using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
-using System.Diagnostics;
+using ResoniteMetricsCounter.UIX.Pages;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.UIX.Item;
@@ -12,11 +13,12 @@ internal abstract class MetricItemBase<T>
     private const float DEFAULT_PADDING = 4;
 
     private readonly Slot slot;
-    private readonly Sync<string> labelField, timeField;
     private readonly Sync<colorX> metricTint;
     private readonly ReferenceProxySource referenceProxySource;
     private readonly RectTransform metricRect;
-    private readonly Sync<string> percentageField;
+
+    protected readonly List<Sync<string>> LabelFields = new();
+    protected abstract List<IMetricsPage.ColumnDefinition> Columns { get; }
 
     public MetricItemBase(Slot container)
     {
@@ -24,6 +26,8 @@ internal abstract class MetricItemBase<T>
 
         uiBuilder.Style.MinHeight = DEFAULT_ITEM_SIZE;
         uiBuilder.Style.TextAutoSizeMin = 0;
+        uiBuilder.Style.TextAutoSizeMax = 24;
+        uiBuilder.Style.TextColor = RadiantUI_Constants.TEXT_COLOR;
 
         slot = uiBuilder.Panel(RadiantUI_Constants.Neutrals.DARK).Slot;
 
@@ -35,42 +39,39 @@ internal abstract class MetricItemBase<T>
         metricTint = metricImage.Tint;
 
         uiBuilder.HorizontalLayout(DEFAULT_PADDING);
-        uiBuilder.Style.FlexibleWidth = 1.0f;
 
-        var labelText = uiBuilder.Text(null, bestFit: true, alignment: Alignment.MiddleLeft);
-        labelText.RectTransform.AnchorMax.Value = new float2(0.8f, 1.0f);
-        labelText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
-        labelField = labelText.Content;
+        uiBuilder.Style.ForceExpandWidth = uiBuilder.Style.ForceExpandHeight = false;
 
-        uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE * 3;
-        uiBuilder.Style.FlexibleWidth = -1.0f;
-        var timeText = uiBuilder.Text(null, bestFit: false, size: 24, alignment: Alignment.MiddleRight);
-        timeText.ParseRichText.Value = false;
-        timeText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
-        timeField = timeText.Content;
+        LabelFields.Capacity = Columns.Count;
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            var column = Columns[i];
+            uiBuilder.Style.FlexibleWidth = column.FlexWidth;
+            uiBuilder.Style.MinWidth = column.MinWidth;
+            LabelFields.Add(uiBuilder.Text(column.Label, alignment: column.Alignment).Content);
+        }
 
-        var percentageText = uiBuilder.Text(null, bestFit: false, size: 24, alignment: Alignment.MiddleRight);
-        percentageText.ParseRichText.Value = false;
-        percentageText.Color.Value = RadiantUI_Constants.TEXT_COLOR;
-        percentageField = percentageText.Content;
+        //uiBuilder.PushStyle();
+        //uiBuilder.Style.FlexibleWidth = -1;
+        //uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE;
 
-        uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE;
+        //var deactivateButton = uiBuilder.Button(OfficialAssets.Common.Icons.Cross, RadiantUI_Constants.Hero.RED);
+        //deactivateButton.LocalPressed += (_, _) => slot.Destroy();
 
-        var deactivateButton = uiBuilder.Button(OfficialAssets.Common.Icons.Cross, RadiantUI_Constants.Hero.RED);
-        deactivateButton.LocalPressed += (_, _) => slot.Destroy();
+        //uiBuilder.PopStyle();
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract long GetTicks(in T metric);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected abstract string? GetLabel(in T metric);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract IWorldElement? GetReference(in T metric);
 
-    public bool Update(in T metric, long maxTicks, long elapsedTicks)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected abstract void UpdateColumn(in T metric, Sync<string> column, int i, long maxTicks, long elapsedTicks, long frameCount);
+
+    public bool Update(in T metric, long maxTicks, long elapsedTicks, long frameCount)
     {
         if (slot.IsDisposed)
         {
@@ -79,19 +80,13 @@ internal abstract class MetricItemBase<T>
 
         var ticks = GetTicks(metric);
         var maxRatio = (float)ticks / maxTicks;
-
         slot.OrderOffset = -ticks;
-        var label = GetLabel(metric);
-        if (label is null)
+
+        for (int i = 0; i < LabelFields.Count; i++)
         {
-            return false;
+            UpdateColumn(metric, LabelFields[i], i, maxTicks, elapsedTicks, frameCount);
         }
 
-        labelField.Value = label;
-
-        var doubleTicks = (double)ticks;
-        timeField.Value = $"{1000.0 * doubleTicks / Stopwatch.Frequency:0.0}ms";
-        percentageField.Value = $"{doubleTicks / elapsedTicks:P3}";
         metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, maxRatio);
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 

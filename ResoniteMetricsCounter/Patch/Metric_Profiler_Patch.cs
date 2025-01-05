@@ -1,4 +1,4 @@
-using FrooxEngine;
+﻿using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteModLoader;
