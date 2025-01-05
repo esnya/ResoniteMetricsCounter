@@ -1,16 +1,15 @@
 ﻿using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
-using ResoniteMetricsCounter.UIX.Pages;
+using ResoniteMetricsCounter.Utils;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.UIX.Item;
 
-internal abstract class MetricItemBase<T>
+
+internal abstract class MetricPageItemBase<T>
 {
-    private const float DEFAULT_ITEM_SIZE = 32;
-    private const float DEFAULT_PADDING = 4;
 
     private readonly Slot slot;
     private readonly Sync<colorX> metricTint;
@@ -18,17 +17,12 @@ internal abstract class MetricItemBase<T>
     private readonly RectTransform metricRect;
 
     protected readonly List<Sync<string>> LabelFields = new();
-    protected abstract List<IMetricsPage.ColumnDefinition> Columns { get; }
 
-    public MetricItemBase(Slot container)
+    public MetricPageItemBase(Slot container, List<MetricColumnDefinition> columns)
     {
         var uiBuilder = new UIBuilder(container);
 
-        uiBuilder.Style.MinHeight = DEFAULT_ITEM_SIZE;
-        uiBuilder.Style.TextAutoSizeMin = 0;
-        uiBuilder.Style.TextAutoSizeMax = 24;
-        uiBuilder.Style.TextColor = RadiantUI_Constants.TEXT_COLOR;
-
+        uiBuilder.Style.MinHeight = Constants.ROWHEIGHT;
         slot = uiBuilder.Panel(RadiantUI_Constants.Neutrals.DARK).Slot;
 
         slot.AttachComponent<Button>();
@@ -38,27 +32,11 @@ internal abstract class MetricItemBase<T>
         metricRect = metricImage.RectTransform;
         metricTint = metricImage.Tint;
 
-        uiBuilder.HorizontalLayout(DEFAULT_PADDING);
-
-        uiBuilder.Style.ForceExpandWidth = uiBuilder.Style.ForceExpandHeight = false;
-
-        LabelFields.Capacity = Columns.Count;
-        for (int i = 0; i < Columns.Count; i++)
+        LabelFields.Capacity = columns.Count;
+        foreach (var label in MetricColumnDefinition.Build(uiBuilder, columns))
         {
-            var column = Columns[i];
-            uiBuilder.Style.FlexibleWidth = column.FlexWidth;
-            uiBuilder.Style.MinWidth = column.MinWidth;
-            LabelFields.Add(uiBuilder.Text(column.Label, alignment: column.Alignment).Content);
+            LabelFields.Add(label.Content);
         }
-
-        //uiBuilder.PushStyle();
-        //uiBuilder.Style.FlexibleWidth = -1;
-        //uiBuilder.Style.PreferredWidth = uiBuilder.Style.MinWidth = DEFAULT_ITEM_SIZE;
-
-        //var deactivateButton = uiBuilder.Button(OfficialAssets.Common.Icons.Cross, RadiantUI_Constants.Hero.RED);
-        //deactivateButton.LocalPressed += (_, _) => slot.Destroy();
-
-        //uiBuilder.PopStyle();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,7 +65,7 @@ internal abstract class MetricItemBase<T>
             UpdateColumn(metric, LabelFields[i], i, maxTicks, elapsedTicks, frameCount);
         }
 
-        metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, maxRatio);
+        metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, MathX.Sqrt(maxRatio));
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 
         var reference = GetReference(metric);

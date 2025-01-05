@@ -1,6 +1,4 @@
-﻿using Elements.Core;
-using FrooxEngine;
-using FrooxEngine.UIX;
+﻿using FrooxEngine;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
 using System.Collections.Generic;
@@ -9,22 +7,13 @@ using System.Linq;
 
 namespace ResoniteMetricsCounter.UIX.Pages;
 
-internal sealed class ObjectRootPage : IMetricsPage
+internal sealed class HierarchyPage : MetricsPageBase
 {
-    private static List<IMetricsPage.ColumnDefinition> Columns => new() {
-        new ("Object Root", flexWidth: 1.0f),
-        new ("Time", minWidth: 32 * 3),
-        new ("%", minWidth: 32 * 3),
-    };
-
-    private sealed class Item : MetricItemBase<Metric<Slot>>
+    private sealed class Item : MetricPageItemBase<Metric<Slot>>
     {
-        protected override List<IMetricsPage.ColumnDefinition> Columns => ObjectRootPage.Columns;
-
-        public Item(Slot container) : base(container)
+        public Item(Slot container, List<MetricColumnDefinition> columns) : base(container, columns)
         {
         }
-
 
         protected override IWorldElement? GetReference(in Metric<Slot> metric)
         {
@@ -52,45 +41,15 @@ internal sealed class ObjectRootPage : IMetricsPage
         }
     }
 
-    private Slot? container;
+    protected override List<MetricColumnDefinition> Columns => new() {
+        new ("Hierarchy", flexWidth: 1.0f),
+        new ("Time", minWidth: 32 * 3),
+        new ("%", minWidth: 32 * 3),
+    };
+
     private readonly List<Item?> items = new();
 
-
-    public void BuildUI(UIBuilder uiBuilder)
-    {
-        container = uiBuilder.VerticalLayout(RadiantUI_Constants.GRID_PADDING).Slot;
-
-        uiBuilder.PushStyle();
-
-        var hori = uiBuilder.HorizontalLayout(RadiantUI_Constants.GRID_PADDING);
-        hori.Slot.OrderOffset = long.MinValue;
-        foreach (var column in Columns)
-        {
-            uiBuilder.Style.FlexibleWidth = column.FlexWidth;
-            uiBuilder.Style.MinWidth = column.MinWidth;
-            uiBuilder.Text(column.Label, alignment: Alignment.MiddleCenter);
-        }
-        uiBuilder.NestOut();
-
-        uiBuilder.PopStyle();
-
-        container.Destroyed += (_) => Dispose();
-    }
-
-    public void Dispose()
-    {
-        if (container is not null && !container.IsDisposed)
-        {
-            container.Destroy();
-        }
-    }
-
-    public bool IsActive()
-    {
-        return container is not null && !container.IsDisposed && container.IsActive;
-    }
-
-    public void Update(in MetricsCounter metricsCounter, int maxItems)
+    public override void Update(in MetricsCounter metricsCounter, int maxItems)
     {
         if (container is null || container.IsDisposed)
         {
@@ -109,7 +68,7 @@ internal sealed class ObjectRootPage : IMetricsPage
         int i = 0;
         foreach (var metric in metricsCounter.ByObjectRoot.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
-            var item = items[i] ??= new Item(container!);
+            var item = items[i] ??= new Item(container, Columns);
             if (i == 0)
             {
                 maxTicks = metric.Ticks;

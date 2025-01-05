@@ -10,10 +10,10 @@ using System.Diagnostics;
 namespace ResoniteMetricsCounter.UIX;
 public sealed class MetricsPanel
 {
-    private readonly List<KeyValuePair<string, IMetricsPage>> pages = new()
+    private readonly List<KeyValuePair<string, MetricsPageBase>> pages = new()
     {
-        new("Detailed", new DetailedMetricsPanelPage()),
-        new("ObjectRoot", new ObjectRootPage()),
+        new("Detailed", new DetailedPage()),
+        new("Hierarchy", new HierarchyPage()),
     };
 
     public const float DEFAULTITEMSIZE = 32;
@@ -231,7 +231,7 @@ public sealed class MetricsPanel
         };
     }
 
-    private static void BuildPageUI(UIBuilder uiBuilder, in IMetricsPage page, in string label, bool active)
+    private static void BuildPageUI(UIBuilder uiBuilder, in MetricsPageBase page, in string label, bool active)
     {
         var slot = uiBuilder.Next(label);
         slot.ActiveSelf = active;

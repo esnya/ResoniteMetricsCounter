@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Serialization;
@@ -61,12 +61,12 @@ public sealed class MetricsCounter : IDisposable
         }
 
         var slot = element.GetSlotFast();
-        if (slot is null || IgnoredHierarchy is null)
+        if (slot is null)
         {
-            return false;
+            return true;
         }
 
-        return IgnoredHierarchy.IsChildOf(slot, includeSelf: true);
+        return IgnoredHierarchy?.IsChildOf(slot, includeSelf: true) ?? false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
