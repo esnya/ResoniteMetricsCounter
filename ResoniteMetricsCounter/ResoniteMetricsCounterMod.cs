@@ -67,6 +67,9 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<int> maxItemsKey = new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
 
+    [AutoRegisterConfigKey]
+    private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
+
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     public static MetricsPanel? Panel { get; private set; }
     public static MetricsCounter? Writer { get; private set; }
@@ -171,6 +174,11 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             harmony.UnpatchCategory(key.Key.ToString());
         }
         harmony.UnpatchCategory(Category.PROFILER);
+
+        if (config?.GetValue(writeToFileKey) == true)
+        {
+            Writer?.WriteToFile();
+        }
 
         Writer?.Dispose();
         WorldElementHelper.Clear();
