@@ -5,6 +5,7 @@ on:
     branches: ["master", "feature/ci"]
     tags:
       - 'v*'
+  workflow_call:
 
 env:
   project: ResoniteMetricsCounter
