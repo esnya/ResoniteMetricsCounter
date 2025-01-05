@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Serialization;
@@ -48,8 +48,7 @@ public sealed class MetricsCounter : IDisposable
 
     private bool ShouldSkipImpl(IWorldElement element)
     {
-        var world = element.World;
-        if (world.Focus != World.WorldFocus.Focused || !ResoniteMetricsCounterMod.CollectStage(world.Stage))
+        if (element.World.Focus != World.WorldFocus.Focused)
         {
             return true;
         }

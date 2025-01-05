@@ -99,12 +99,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 #endif
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CollectStage(World.RefreshStage stage)
-    {
-        return collectStage.TryGetValue(stage, out var value) && value;
-    }
-
     private static void Init(ResoniteMod modInstance)
     {
         harmony.PatchCategory(Category.CORE);
@@ -146,7 +140,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     }
 #endif
 
-
     public static IEnumerable<string> ParseCommaSeparatedString(string? str)
     {
         return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
@@ -158,13 +151,27 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
         Panel = new MetricsPanel(slot, Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
+
+        foreach (var key in stageConfigKeys)
+        {
+            var collect = config?.GetValue(key.Value) ?? true;
+            if (collect)
+            {
+                harmony.PatchCategory(key.Key.ToString());
+            }
+        }
         harmony.PatchCategory(Category.PROFILER);
     }
 
     public static void Stop()
     {
         Msg("Stopping Profiler");
+        foreach (var key in stageConfigKeys)
+        {
+            harmony.UnpatchCategory(key.Key.ToString());
+        }
         harmony.UnpatchCategory(Category.PROFILER);
+
         Writer?.Dispose();
         WorldElementHelper.Clear();
         Panel = null;
