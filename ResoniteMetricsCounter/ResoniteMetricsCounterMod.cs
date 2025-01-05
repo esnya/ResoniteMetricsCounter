@@ -14,7 +14,6 @@ using ResoniteModLoader;
 using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
 using System;
-using System.Runtime.CompilerServices;
 
 
 
@@ -39,7 +38,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
     public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
 
-    private static HashSet<World.RefreshStage> SupportedStages = new()
+    private static readonly HashSet<World.RefreshStage> SupportedStages = new()
     {
         World.RefreshStage.PhysicsMoved,
         World.RefreshStage.ProtoFluxContinuousChanges,
@@ -77,7 +76,10 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        if (builder is null)
+        {
+            throw new ArgumentNullException(nameof(builder));
+        }
 
         foreach (var stage in SupportedStages)
         {
