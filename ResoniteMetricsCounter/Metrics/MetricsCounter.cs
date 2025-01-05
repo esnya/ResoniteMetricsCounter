@@ -1,4 +1,4 @@
-using Elements.Core;
+﻿using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Serialization;
@@ -134,7 +134,7 @@ public sealed class MetricsCounter : IDisposable
         Converters = { new IWorldElementConverter(), new JsonStringEnumConverter<World.RefreshStage>() },
     };
 
-    public void Flush()
+    public void WriteToFile()
     {
         ResoniteMod.DebugFunc(() => $"Writing metrics to {Filename}");
         using var writer = new FileStream(Filename, FileMode.Create);
@@ -145,7 +145,6 @@ public sealed class MetricsCounter : IDisposable
     {
         IsDisposed = true;
         stopwatch.Stop();
-        Flush();
     }
 
     internal void UpdateBlacklist(IEnumerable<string> blackList)
