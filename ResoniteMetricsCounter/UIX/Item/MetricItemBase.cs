@@ -70,22 +70,28 @@ internal abstract class MetricItemBase<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract IWorldElement? GetReference(in T metric);
 
-    public bool Update(in T metric, long maxTicks, long totalTicks)
+    public bool Update(in T metric, long maxTicks, long elapsedTicks)
     {
-        if (slot.IsDisposed) return false;
+        if (slot.IsDisposed)
+        {
+            return false;
+        }
 
         var ticks = GetTicks(metric);
         var maxRatio = (float)ticks / maxTicks;
 
         slot.OrderOffset = -ticks;
         var label = GetLabel(metric);
-        if (label is null) return false;
+        if (label is null)
+        {
+            return false;
+        }
 
         labelField.Value = label;
 
         var doubleTicks = (double)ticks;
         timeField.Value = $"{1000.0 * doubleTicks / Stopwatch.Frequency:0.0}ms";
-        percentageField.Value = $"{doubleTicks / totalTicks:P3}";
+        percentageField.Value = $"{doubleTicks / elapsedTicks:P3}";
         metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, maxRatio);
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 

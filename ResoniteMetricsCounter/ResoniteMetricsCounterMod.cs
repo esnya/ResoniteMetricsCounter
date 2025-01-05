@@ -13,6 +13,10 @@ using ResoniteMetricsCounter.UIX;
 using ResoniteModLoader;
 using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
+using System;
+using System.Runtime.CompilerServices;
+
+
 
 
 
@@ -35,10 +39,28 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
     public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
 
+    private static HashSet<World.RefreshStage> SupportedStages = new()
+    {
+        World.RefreshStage.PhysicsMoved,
+        World.RefreshStage.ProtoFluxContinuousChanges,
+        World.RefreshStage.ProtoFluxUpdates,
+        World.RefreshStage.Updates,
+        World.RefreshStage.Changes,
+        World.RefreshStage.Connectors,
+    };
+
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => "UserPoseController,TipTouchSource,LocomotionController,HandPoser,InteractionLaser");
+    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => string.Join(",", new[] {
+        nameof(InteractionHandler),
+        nameof(InteractionLaser),
+        nameof(HandPoser),
+        nameof(LocomotionController),
+        nameof(UserPoseController),
+        nameof(PhotoCaptureManager),
+        nameof(TipTouchSource),
+     }));
 
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<float2> panelSizeKey = new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
@@ -50,6 +72,21 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public static MetricsPanel? Panel { get; private set; }
     public static MetricsCounter? Writer { get; private set; }
     private static string menuActionLabel = MENU_ACTION;
+    private static readonly Dictionary<World.RefreshStage, ModConfigurationKey<bool>> stageConfigKeys = new();
+    private static readonly Dictionary<World.RefreshStage, bool> collectStage = new();
+
+    public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
+    {
+        if (builder is null) throw new ArgumentNullException(nameof(builder));
+
+        foreach (var stage in SupportedStages)
+        {
+            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => true);
+            key.OnChanged += value => collectStage[stage] = (bool)value!;
+            builder.Key(key);
+            stageConfigKeys[stage] = key;
+        }
+    }
 
     public override void OnEngineInit()
     {
@@ -60,11 +97,24 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 #endif
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CollectStage(World.RefreshStage stage)
+    {
+        return collectStage.TryGetValue(stage, out var value) && value;
+    }
+
     private static void Init(ResoniteMod modInstance)
     {
         harmony.PatchCategory(Category.CORE);
         config = modInstance?.GetConfiguration();
 
+        if (config is not null)
+        {
+            foreach (var p in stageConfigKeys)
+            {
+                collectStage[p.Key] = config.GetValue(p.Value);
+            }
+        }
 
 #if DEBUG
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";

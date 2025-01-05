@@ -29,8 +29,15 @@ public sealed class MetricsPanel
 
     public MetricsPanel(Slot slot, MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
-        if (slot is null) throw new ArgumentNullException(nameof(slot));
-        if (metricsCounter is null) throw new ArgumentNullException(nameof(metricsCounter));
+        if (slot is null)
+        {
+            throw new ArgumentNullException(nameof(slot));
+        }
+
+        if (metricsCounter is null)
+        {
+            throw new ArgumentNullException(nameof(metricsCounter));
+        }
 
         this.maxItems = maxItems;
         this.metricsCounter = metricsCounter;
@@ -122,7 +129,10 @@ public sealed class MetricsPanel
                 foreach (var slot in pagesButtonContainer.Children)
                 {
                     var layout = slot.GetComponent<LayoutElement>();
-                    if (layout is null) continue;
+                    if (layout is null)
+                    {
+                        continue;
+                    }
 
                     layout.FlexibleWidth.Value = slot.Name == label ? 3.0f : 1.0f;
                 }
@@ -157,10 +167,17 @@ public sealed class MetricsPanel
 
     public void Update()
     {
-        if (slot?.IsDisposed ?? true) return;
+        if (slot?.IsDisposed ?? true)
+        {
+            return;
+        }
 
-        if (statisticsField.IsDisposed) return;
-        statisticsField.Value = $"Total:\t{1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.ByElement.Count}";
+        if (statisticsField.IsDisposed)
+        {
+            return;
+        }
+
+        statisticsField.Value = $"Elapsed:\t{metricsCounter.ElapsedMilliseconds:0.00}ms<br>Total:\t{1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency:0.00}ms<br>Max:\t{1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency:0.00}ms<br>Entities:\t{metricsCounter.ByElement.Count}";
 
         foreach (var page in pages)
         {

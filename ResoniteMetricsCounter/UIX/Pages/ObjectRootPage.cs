@@ -54,7 +54,10 @@ internal sealed class ObjectRootPage : IMetricsPage
 
     public void Update(in MetricsCounter metricsCounter, int maxItems)
     {
-        if (container is null || container.IsDisposed) return;
+        if (container is null || container.IsDisposed)
+        {
+            return;
+        }
 
         if (items.Count < maxItems)
         {
@@ -62,15 +65,18 @@ internal sealed class ObjectRootPage : IMetricsPage
         }
 
         long maxTicks = metricsCounter.ByObjectRoot.Max;
-        var totalTicks = metricsCounter.ByObjectRoot.Total;
+        var elapsedTicks = metricsCounter.ElapsedTicks;
 
         int i = 0;
         foreach (var metric in metricsCounter.ByObjectRoot.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
             var item = items[i] ??= new Item(container!);
-            if (i == 0) maxTicks = metric.Ticks;
+            if (i == 0)
+            {
+                maxTicks = metric.Ticks;
+            }
 
-            if (!item.Update(metric, maxTicks, totalTicks))
+            if (!item.Update(metric, maxTicks, elapsedTicks))
             {
                 metricsCounter.ByObjectRoot.Remove(metric.Target);
             }

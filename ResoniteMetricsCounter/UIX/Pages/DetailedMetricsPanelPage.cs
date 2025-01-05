@@ -10,24 +10,52 @@ namespace ResoniteMetricsCounter.UIX.Pages;
 
 internal sealed class DetailedMetricsPanelPage : IMetricsPage
 {
-    private sealed class Item : MetricItemBase<StageMetric<IWorldElement>>
+    private sealed class LabelValueCache : CachedValueBase<StageMetric<IWorldElement>, int, string>
     {
-        public Item(Slot container) : base(container)
+        protected override int GetKey(in StageMetric<IWorldElement> metric)
         {
+            return metric.Stage.GetHashCode() ^ metric.Target.ReferenceID.GetHashCode();
         }
 
-        protected override string GetLabel(in StageMetric<IWorldElement> metric)
+        protected override string GetValue(in StageMetric<IWorldElement> metric)
         {
             var target = metric.Target;
             var slot = target.GetSlotFast();
             var parent = slot?.Parent;
-            var objectRoot = slot?.GetExactObjectRootOrWorldRootFast() ?? target.World.RootSlot;
+            var objectRoot = slot?.GetMetricObjectRoot() ?? target.World.RootSlot;
 
             if (parent is null)
             {
-                return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target?.GetNameFast()}";
+                return $"{objectRoot.GetNameFast()}/../{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
             }
-            return $"[{metric.Stage}] {objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()}";
+
+            if (slot == objectRoot)
+            {
+                return $"{objectRoot.GetNameFast()} {parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
+            }
+
+            if (parent == objectRoot)
+            {
+                return $"{objectRoot.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
+            }
+            return $"{objectRoot.GetNameFast()}/../{parent.GetNameFast()}/{slot?.GetNameFast()}.{target?.GetNameFast()} [{metric.Stage}]";
+        }
+    }
+
+    private readonly LabelValueCache labelCache = new();
+
+    private sealed class Item : MetricItemBase<StageMetric<IWorldElement>>
+    {
+        private readonly LabelValueCache labelCache;
+
+        public Item(Slot container, LabelValueCache labelValueCache) : base(container)
+        {
+            labelCache = labelValueCache;
+        }
+
+        protected override string GetLabel(in StageMetric<IWorldElement> metric)
+        {
+            return labelCache.GetOrCache(metric);
         }
 
         protected override IWorldElement? GetReference(in StageMetric<IWorldElement> metric)
@@ -56,10 +84,13 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
 
     public void Update(in MetricsCounter metricsCounter, int maxItems)
     {
-        if (container is null || container.IsDisposed) return;
+        if (container is null || container.IsDisposed)
+        {
+            return;
+        }
 
         var maxTicks = metricsCounter.ByElement.Max;
-        var totalTicks = metricsCounter.ByElement.Total;
+        var elapsedTicks = metricsCounter.ElapsedTicks;
 
         if (items?.Count != maxItems)
         {
@@ -76,9 +107,9 @@ internal sealed class DetailedMetricsPanelPage : IMetricsPage
         var i = 0;
         foreach (var metric in metricsCounter.ByElement.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
         {
-            var item = items[i] ?? (items[i] = new Item(container!));
+            var item = items[i] ?? (items[i] = new Item(container!, labelCache));
 
-            if (!item.Update(metric, maxTicks, totalTicks))
+            if (!item.Update(metric, maxTicks, elapsedTicks))
             {
                 metricsCounter.ByElement.Remove(metric.Target);
             }
