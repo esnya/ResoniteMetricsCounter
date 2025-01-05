@@ -118,7 +118,10 @@ public sealed class MetricsCounter : IDisposable
             return;
         }
 
-        ByObjectRoot.Add(objectRoot, ticks);
+        for (var slot = objectRoot; slot != null; slot = slot.Parent?.GetMetricObjectRoot())
+        {
+            ByObjectRoot.Add(slot, ticks);
+        }
     }
 
     private static readonly JsonSerializerOptions jsonSerializerOptions = new()
