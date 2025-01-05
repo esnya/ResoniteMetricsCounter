@@ -1,4 +1,4 @@
-using Elements.Core;
+﻿using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Serialization;
@@ -34,6 +34,8 @@ public sealed class MetricsCounter : IDisposable
 
     [JsonInclude] public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
     public long ElapsedTicks => stopwatch.ElapsedTicks;
+
+    [JsonInclude] public int FrameCount { get; private set; }
 
     public MetricsCounter(IEnumerable<string> blackList)
     {
@@ -162,5 +164,10 @@ public sealed class MetricsCounter : IDisposable
     internal void IgnoreHierarchy(Slot slot)
     {
         IgnoredHierarchy = slot;
+    }
+
+    internal void OnUpdate()
+    {
+        FrameCount++;
     }
 }
