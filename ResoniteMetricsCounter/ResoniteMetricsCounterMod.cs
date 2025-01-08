@@ -82,9 +82,9 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             throw new ArgumentNullException(nameof(builder));
         }
 
-        foreach (var stage in Constants.CollectableStages)
+        foreach (var stage in MetricStageUtils.Collectables)
         {
-            var defaultValue = Constants.DefaultStageConfig.Contains(stage);
+            var defaultValue = MetricStageUtils.Defaults.Contains(stage);
             var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => defaultValue);
             key.OnChanged += value => collectStage[stage] = (bool)value!;
             builder.Key(key);
