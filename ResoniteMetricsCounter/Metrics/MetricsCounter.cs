@@ -107,12 +107,19 @@ public sealed class MetricsCounter : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddForCurrentStage(IWorldElement element, long ticks)
     {
+        var stage = (MetricStage)(int)element.World.Stage;
+        Add(element, ticks, stage);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Add(IWorldElement element, long ticks, MetricStage stage)
+    {
         if (shouldSkip.GetOrCache(element))
         {
             return;
         }
 
-        ByElement.Add(element, ticks);
+        ByElement.Add(element, ticks, stage);
 
         var objectRoot = element.GetMetricObjectRoot();
         if (objectRoot is null)
@@ -162,6 +169,7 @@ public sealed class MetricsCounter : IDisposable
 
     internal void IgnoreHierarchy(Slot slot)
     {
+        shouldSkip.Clear();
         IgnoredHierarchy = slot;
     }
 

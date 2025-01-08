@@ -10,22 +10,22 @@ namespace ResoniteMetricsCounter.UIX.Pages;
 
 internal sealed class DetailedPage : MetricsPageBase
 {
-    private sealed class Item : MetricPageItemBase<StageMetric<IWorldElement>>
+    private sealed class Item : MetricPageItemBase<Metric<IWorldElement>>
     {
         public Item(Slot container, List<MetricColumnDefinition> columns) : base(container, columns)
         {
         }
 
-        protected override IWorldElement? GetReference(in StageMetric<IWorldElement> metric)
+        protected override IWorldElement? GetReference(in Metric<IWorldElement> metric)
         {
             return metric.Target.GetSlotFast();
         }
 
-        protected override long GetTicks(in StageMetric<IWorldElement> metric)
+        protected override long GetTicks(in Metric<IWorldElement> metric)
         {
             return metric.Ticks;
         }
-        protected override void UpdateColumn(in StageMetric<IWorldElement> metric, Sync<string> column, int i, long maxTicks, long totalTicks, long frameCount)
+        protected override void UpdateColumn(in Metric<IWorldElement> metric, Sync<string> column, int i, long maxTicks, long totalTicks, long frameCount)
         {
             switch (i)
             {

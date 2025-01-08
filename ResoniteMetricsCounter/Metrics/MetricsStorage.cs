@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace ResoniteMetricsCounter.Metrics;
 
 
-public interface IMetricStorage<TElement, TMetric> where TElement : IWorldElement where TMetric : Metric<TElement>
+public interface IMetricStorage<T> where T : IWorldElement
 {
     /// <summary>
     /// Total ticks of all metrics.
@@ -28,33 +28,33 @@ public interface IMetricStorage<TElement, TMetric> where TElement : IWorldElemen
     /// <summary>
     /// Enumerate metrics of all stages.
     /// </summary>
-    IEnumerable<TMetric> Metrics { get; }
+    IEnumerable<Metric<T>> Metrics { get; }
 
     /// <summary>
     /// Add a metric for a target.
     /// </summary>
     /// <param name="target">Target element to add the metric for.</param>
     /// <param name="ticks">Ticks to add to the metric.</param>
-    void Add(TElement target, long ticks);
+    void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown);
 
     /// <summary>
     /// Remove all metrics for a target.
     /// </summary>
     /// <param name="target">Target element to remove metrics for.</param>
     /// <returns>Cound of metrics removed.</returns>
-    int Remove(TElement target);
+    int Remove(T target);
 
     /// <summary>
     /// Remove all metrics that match a predicate.
     /// </summary>
     /// <param name="predicate">Predicate to match metrics to remove.</param>
-    int RemoveWhere(Func<TMetric, bool> predicate);
+    int RemoveWhere(Func<Metric<T>, bool> predicate);
 }
 
 
-public abstract class MetricsStorageBase<TElement, TMetric> : IMetricStorage<TElement, TMetric> where TElement : IWorldElement where TMetric : Metric<TElement>
+public class MetricsStorage<T> : IMetricStorage<T> where T : IWorldElement
 {
-    private readonly Dictionary<RefID, TMetric> metrics = new();
+    private readonly Dictionary<RefID, Metric<T>> metrics = new();
 
     public long Total { get; private set; }
 
@@ -62,12 +62,11 @@ public abstract class MetricsStorageBase<TElement, TMetric> : IMetricStorage<TEl
 
     public int Count { get => metrics.Count; }
 
-    public IEnumerable<TMetric> Metrics => metrics.Values;
+    public IEnumerable<Metric<T>> Metrics => metrics.Values;
 
-    protected abstract TMetric CreateMetric(in TElement target, long ticks);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Add(TElement target, long ticks)
+    public void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown)
     {
         var refID = target.ReferenceID;
 
@@ -81,7 +80,7 @@ public abstract class MetricsStorageBase<TElement, TMetric> : IMetricStorage<TEl
         }
         else
         {
-            metrics[refID] = CreateMetric(target, ticks);
+            metrics[refID] = new Metric<T>(target, ticks, stage);
             if (ticks > Max)
             {
                 Max = ticks;
@@ -92,13 +91,13 @@ public abstract class MetricsStorageBase<TElement, TMetric> : IMetricStorage<TEl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int Remove(TElement target)
+    public int Remove(T target)
     {
         return metrics.Remove(target.ReferenceID) ? 1 : 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int RemoveWhere(Func<TMetric, bool> predicate)
+    public int RemoveWhere(Func<Metric<T>, bool> predicate)
     {
         var query = from metric in Metrics
                     where predicate(metric)
@@ -109,37 +108,21 @@ public abstract class MetricsStorageBase<TElement, TMetric> : IMetricStorage<TEl
     }
 }
 
-public sealed class MetricsStorage<T> : MetricsStorageBase<T, Metric<T>> where T : IWorldElement
+public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorldElement
 {
-    protected override Metric<T> CreateMetric(in T target, long ticks)
-    {
-        return new(target, ticks);
-    }
-}
 
-
-public sealed class MetricsByStageStorage<T> : IMetricStorage<T, StageMetric<T>> where T : IWorldElement
-{
-    internal sealed class StorageImpl : MetricsStorageBase<T, StageMetric<T>>
-    {
-        protected override StageMetric<T> CreateMetric(in T target, long ticks)
-        {
-            return new(target.World.Stage, target, ticks);
-        }
-    }
-
-    private readonly List<StorageImpl> storageByStage;
+    private readonly List<MetricsStorage<T>> storageByStage;
     public MetricsByStageStorage()
     {
-        var stageCount = Enum.GetValues(typeof(World.RefreshStage)).AsQueryable().Cast<int>().Max() + 1;
-        storageByStage = new(Enumerable.Range(0, stageCount).Select(_ => new StorageImpl()));
+        var stageCount = Enum.GetValues(typeof(MetricStage)).AsQueryable().Cast<int>().Max() + 1;
+        storageByStage = new(Enumerable.Range(0, stageCount).Select(_ => new MetricsStorage<T>()));
     }
 
     public long Total { get; private set; }
     public long Max { get; private set; }
     public int Count { get => storageByStage.Sum(s => s.Count); }
 
-    public IEnumerable<StageMetric<T>> Metrics => storageByStage.SelectMany(s => s.Metrics);
+    public IEnumerable<Metric<T>> Metrics => storageByStage.SelectMany(s => s.Metrics).Where(m => m is not null);
 
     private void UpdateStats()
     {
@@ -147,12 +130,9 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T, StageMetric<T>>
         Max = storageByStage.Max(s => s.Max);
     }
 
-    public void Add(T target, long ticks)
+    public void Add(T target, long ticks, MetricStage stage)
     {
-        var stage = target.World.Stage;
-
-        storageByStage[(int)stage].Add(target, ticks);
-
+        storageByStage[(int)stage].Add(target, ticks, stage);
         UpdateStats();
     }
 
@@ -161,7 +141,7 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T, StageMetric<T>>
         return storageByStage.Sum(s => s.Remove(target));
     }
 
-    public int RemoveWhere(Func<StageMetric<T>, bool> predicate)
+    public int RemoveWhere(Func<Metric<T>, bool> predicate)
     {
         var query = from storage in storageByStage
                     select storage.RemoveWhere(predicate) into n

@@ -14,6 +14,8 @@ using ResoniteModLoader;
 using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
 using System;
+using System.Runtime.CompilerServices;
+
 
 
 
@@ -37,16 +39,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public override string Author => ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
     public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
     public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
-
-    private static readonly HashSet<World.RefreshStage> SupportedStages = new()
-    {
-        World.RefreshStage.PhysicsMoved,
-        World.RefreshStage.ProtoFluxContinuousChanges,
-        World.RefreshStage.ProtoFluxUpdates,
-        World.RefreshStage.Updates,
-        World.RefreshStage.Changes,
-        World.RefreshStage.Connectors,
-    };
 
     private static ModConfiguration? config;
 
@@ -74,8 +66,14 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public static MetricsPanel? Panel { get; private set; }
     public static MetricsCounter? Writer { get; private set; }
     private static string menuActionLabel = MENU_ACTION;
-    private static readonly Dictionary<World.RefreshStage, ModConfigurationKey<bool>> stageConfigKeys = new();
-    private static readonly Dictionary<World.RefreshStage, bool> collectStage = new();
+    private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
+    private static readonly Dictionary<MetricStage, bool> collectStage = new();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool GetStageConfigValue(MetricStage stage)
+    {
+        return stageConfigKeys.TryGetValue(stage, out var key) ? config?.GetValue(key) ?? true : true;
+    }
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
@@ -84,9 +82,10 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             throw new ArgumentNullException(nameof(builder));
         }
 
-        foreach (var stage in SupportedStages)
+        foreach (var stage in Constants.CollectableStages)
         {
-            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => true);
+            var defaultValue = Constants.DefaultStageConfig.Contains(stage);
+            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => defaultValue);
             key.OnChanged += value => collectStage[stage] = (bool)value!;
             builder.Key(key);
             stageConfigKeys[stage] = key;
