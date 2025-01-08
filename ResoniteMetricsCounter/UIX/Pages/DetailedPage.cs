@@ -45,7 +45,7 @@ internal sealed class DetailedPage : MetricsPageBase
                     column.Value = $"{metric.Stage}";
                     break;
                 case 5:
-                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.00}ms";
+                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.000}ms";
                     break;
                 case 6:
                     column.Value = $"{(double)metric.Ticks / totalTicks:0.000%}";

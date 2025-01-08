@@ -290,7 +290,7 @@ internal sealed class MetricsPanel
 
         if (avgTotalTimeField is not null && !avgTotalTimeField.IsDisposed)
         {
-            avgTotalTimeField.Value = $"{totalTime / frames:0.00}ms";
+            avgTotalTimeField.Value = $"{totalTime / frames:0.000}ms";
         }
 
 
@@ -298,7 +298,7 @@ internal sealed class MetricsPanel
 
         if (avgMaxTimeField is not null && !avgMaxTimeField.IsDisposed)
         {
-            avgMaxTimeField.Value = $"{maxTime / frames:0.00}ms";
+            avgMaxTimeField.Value = $"{maxTime / frames:0.000}ms";
         }
 
         if (maxTimeField is not null && !maxTimeField.IsDisposed)
