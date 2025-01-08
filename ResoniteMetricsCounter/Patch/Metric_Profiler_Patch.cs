@@ -1,4 +1,5 @@
-using FrooxEngine;
+﻿using FrooxEngine;
+using FrooxEngine.PhotonDust;
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
 using ResoniteMetricsCounter.Metrics;
@@ -250,10 +251,10 @@ internal static class Metric_Profiler_Patch
         }
     }
 
-    [HarmonyPatchCategory("ProtoFluxContinuousChanges"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunContinuousChanges))]
-    private static class ProtoFluxController_RunContinuousChanges_Patch
+    [HarmonyPatchCategory("ParticleSystems"), HarmonyPatch(typeof(ParticleSystemManager), nameof(ParticleSystemManager.Update))]
+    internal static class ParticleSystemManager_Patch
     {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges()));
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(typeof(ParticleSystem).Method("ScheduleUpdate")));
     }
 
     [HarmonyPatchCategory(Category.PROFILER), HarmonyPatch]
