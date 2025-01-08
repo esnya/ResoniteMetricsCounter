@@ -16,7 +16,7 @@ using System.Text.Json.Serialization;
 namespace ResoniteMetricsCounter.Metrics;
 
 
-public sealed class MetricsCounter : IDisposable
+internal sealed class MetricsCounter : IDisposable
 {
     private readonly CachedElementValue<IWorldElement, bool> shouldSkip;
 

@@ -63,8 +63,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
-    public static MetricsPanel? Panel { get; private set; }
-    public static MetricsCounter? Writer { get; private set; }
+    internal static MetricsPanel? Panel { get; private set; }
+    internal static MetricsCounter? Writer { get; private set; }
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
@@ -72,7 +72,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetStageConfigValue(MetricStage stage)
     {
-        return stageConfigKeys.TryGetValue(stage, out var key) ? config?.GetValue(key) ?? true : true;
+        return !stageConfigKeys.TryGetValue(stage, out var key) || (config?.GetValue(key) ?? true);
     }
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)

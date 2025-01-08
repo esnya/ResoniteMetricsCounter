@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace ResoniteMetricsCounter.Metrics;
 
@@ -51,12 +52,11 @@ public interface IMetricStorage<T> where T : IWorldElement
     int RemoveWhere(Func<Metric<T>, bool> predicate);
 }
 
-
-public class MetricsStorage<T> : IMetricStorage<T> where T : IWorldElement
+internal abstract class MetricStorageBase<T> : IMetricStorage<T> where T : IWorldElement
 {
     private readonly Dictionary<RefID, Metric<T>> metrics = new();
 
-    public long Total { get; private set; }
+    public abstract long Total { get; protected set; }
 
     public long Max { get; private set; }
 
@@ -64,13 +64,18 @@ public class MetricsStorage<T> : IMetricStorage<T> where T : IWorldElement
 
     public IEnumerable<Metric<T>> Metrics => metrics.Values;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected void InternalAdd(T target, long ticks, MetricStage stage)
+    {
+        InternalAdd(target, ticks, stage, metrics);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown)
+    protected void InternalAdd(T target, long ticks, MetricStage stage, Dictionary<RefID, Metric<T>> metricsDict)
     {
         var refID = target.ReferenceID;
 
-        if (metrics.TryGetValue(refID, out var metric))
+        if (metricsDict.TryGetValue(refID, out var metric))
         {
             metric.Add(ticks);
             if (metric.Ticks > Max)
@@ -80,15 +85,16 @@ public class MetricsStorage<T> : IMetricStorage<T> where T : IWorldElement
         }
         else
         {
-            metrics[refID] = new Metric<T>(target, ticks, stage);
+            metricsDict[refID] = new Metric<T>(target, ticks, stage);
             if (ticks > Max)
             {
                 Max = ticks;
             }
         }
-
-        Total += ticks;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public abstract void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Remove(T target)
@@ -108,14 +114,79 @@ public class MetricsStorage<T> : IMetricStorage<T> where T : IWorldElement
     }
 }
 
+
+internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable where T : IWorldElement
+{
+    private readonly ThreadLocal<Dictionary<RefID, Metric<T>>> parallelMetrics = new(() => new());
+    private bool hasParallelMetric;
+
+    public override long Total { get; protected set; }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown)
+    {
+        var refID = target.ReferenceID;
+
+        var isParallel = stage == MetricStage.DynamicBoneChainSimulation;
+
+        if (isParallel)
+        {
+            hasParallelMetric = true;
+            InternalAdd(target, ticks, stage, parallelMetrics.Value);
+        }
+        if (!isParallel)
+        {
+            InternalAdd(target, ticks, stage);
+            Total += ticks;
+
+            if (hasParallelMetric)
+            {
+                hasParallelMetric = false;
+                var query = from item in parallelMetrics.Values.SelectMany(d => d)
+                            group item.Value by item.Key into values
+                            select values;
+
+                foreach (var values in query)
+                {
+                    var maxTicks = values.Max(m => m.Ticks);
+                    Total += maxTicks;
+
+                    var metric = values.First();
+                    InternalAdd(metric.Target, maxTicks, metric.Stage);
+                }
+                foreach (var value in parallelMetrics.Values)
+                {
+                    value.Clear();
+                }
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        parallelMetrics.Dispose();
+    }
+}
+
 public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorldElement
 {
+    private sealed class MetricsStorageImpl : MetricStorageBase<T>
+    {
+        public override long Total { get; protected set; }
 
-    private readonly List<MetricsStorage<T>> storageByStage;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override void Add(T target, long ticks, MetricStage stage = MetricStage.Unknown)
+        {
+            InternalAdd(target, ticks, stage);
+            Total += ticks;
+        }
+    }
+
+    private readonly List<MetricsStorageImpl> storageByStage;
     public MetricsByStageStorage()
     {
         var stageCount = Enum.GetValues(typeof(MetricStage)).AsQueryable().Cast<int>().Max() + 1;
-        storageByStage = new(Enumerable.Range(0, stageCount).Select(_ => new MetricsStorage<T>()));
+        storageByStage = new(Enumerable.Range(0, stageCount).Select(_ => new MetricsStorageImpl()));
     }
 
     public long Total { get; private set; }

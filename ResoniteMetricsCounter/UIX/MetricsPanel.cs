@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ResoniteMetricsCounter.UIX;
-public sealed class MetricsPanel
+internal sealed class MetricsPanel
 {
     private readonly List<KeyValuePair<string, MetricsPageBase>> pages = new()
     {

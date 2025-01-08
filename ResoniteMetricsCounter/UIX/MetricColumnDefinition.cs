@@ -31,10 +31,7 @@ internal struct MetricColumnDefinition
         uiBuilder.Style.ForceExpandWidth = false;
 
         var horizontalLayout = uiBuilder.HorizontalLayout(Constants.SPACING, Constants.PADDING);
-        if (containerModifier != null)
-        {
-            containerModifier(horizontalLayout);
-        }
+        containerModifier?.Invoke(horizontalLayout);
 
         foreach (var column in columns)
         {
