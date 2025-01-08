@@ -39,5 +39,6 @@ jobs:
           run: |
             git push
 
-        - name: Build and Release
-          uses: esnya/ResoniteMetricsCounter/.github/workflows/dotnet-build.yml@master
+  release:
+    needs: version
+    uses: esnya/ResoniteMetricsCounter/.github/workflows/dotnet-build.yml@master
