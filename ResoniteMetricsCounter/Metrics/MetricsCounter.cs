@@ -169,8 +169,10 @@ internal sealed class MetricsCounter : IDisposable
 
     internal void IgnoreHierarchy(Slot slot)
     {
-        shouldSkip.Clear();
         IgnoredHierarchy = slot;
+        shouldSkip.Clear();
+        ByElement.RemoveWhere(m => m.Target.GetSlotFast()?.IsChildOf(slot, includeSelf: true) ?? false);
+        ByObjectRoot.RemoveWhere(m => m.Target.IsChildOf(slot, includeSelf: true));
     }
 
     internal void OnUpdate()
