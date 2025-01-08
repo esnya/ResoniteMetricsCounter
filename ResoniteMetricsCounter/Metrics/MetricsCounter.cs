@@ -16,7 +16,7 @@ using System.Text.Json.Serialization;
 namespace ResoniteMetricsCounter.Metrics;
 
 
-public sealed class MetricsCounter : IDisposable
+internal sealed class MetricsCounter : IDisposable
 {
     private readonly CachedElementValue<IWorldElement, bool> shouldSkip;
 
@@ -107,12 +107,19 @@ public sealed class MetricsCounter : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AddForCurrentStage(IWorldElement element, long ticks)
     {
+        var stage = (MetricStage)(int)element.World.Stage;
+        Add(element, ticks, stage);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Add(IWorldElement element, long ticks, MetricStage stage)
+    {
         if (shouldSkip.GetOrCache(element))
         {
             return;
         }
 
-        ByElement.Add(element, ticks);
+        ByElement.Add(element, ticks, stage);
 
         var objectRoot = element.GetMetricObjectRoot();
         if (objectRoot is null)
@@ -163,6 +170,9 @@ public sealed class MetricsCounter : IDisposable
     internal void IgnoreHierarchy(Slot slot)
     {
         IgnoredHierarchy = slot;
+        shouldSkip.Clear();
+        ByElement.RemoveWhere(m => m.Target.GetSlotFast()?.IsChildOf(slot, includeSelf: true) ?? false);
+        ByObjectRoot.RemoveWhere(m => m.Target.IsChildOf(slot, includeSelf: true));
     }
 
     internal void OnUpdate()

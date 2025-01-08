@@ -14,6 +14,8 @@ using ResoniteModLoader;
 using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
 using System;
+using System.Runtime.CompilerServices;
+
 
 
 
@@ -38,16 +40,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
     public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
 
-    private static readonly HashSet<World.RefreshStage> SupportedStages = new()
-    {
-        World.RefreshStage.PhysicsMoved,
-        World.RefreshStage.ProtoFluxContinuousChanges,
-        World.RefreshStage.ProtoFluxUpdates,
-        World.RefreshStage.Updates,
-        World.RefreshStage.Changes,
-        World.RefreshStage.Connectors,
-    };
-
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
@@ -71,11 +63,17 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
-    public static MetricsPanel? Panel { get; private set; }
-    public static MetricsCounter? Writer { get; private set; }
+    internal static MetricsPanel? Panel { get; private set; }
+    internal static MetricsCounter? Writer { get; private set; }
     private static string menuActionLabel = MENU_ACTION;
-    private static readonly Dictionary<World.RefreshStage, ModConfigurationKey<bool>> stageConfigKeys = new();
-    private static readonly Dictionary<World.RefreshStage, bool> collectStage = new();
+    private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
+    private static readonly Dictionary<MetricStage, bool> collectStage = new();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool GetStageConfigValue(MetricStage stage)
+    {
+        return !stageConfigKeys.TryGetValue(stage, out var key) || (config?.GetValue(key) ?? true);
+    }
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
@@ -84,9 +82,10 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             throw new ArgumentNullException(nameof(builder));
         }
 
-        foreach (var stage in SupportedStages)
+        foreach (var stage in MetricStageUtils.Collectables)
         {
-            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => true);
+            var defaultValue = MetricStageUtils.Defaults.Contains(stage);
+            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => defaultValue);
             key.OnChanged += value => collectStage[stage] = (bool)value!;
             builder.Key(key);
             stageConfigKeys[stage] = key;
@@ -131,7 +130,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Error(e);
         }
@@ -157,13 +156,16 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         foreach (var key in stageConfigKeys)
         {
-            var collect = config?.GetValue(key.Value) ?? true;
-            if (collect)
+            if (GetStageConfigValue(key.Key))
             {
+                Msg($"Patching to profile {key.Key}");
                 harmony.PatchCategory(key.Key.ToString());
             }
         }
+
         harmony.PatchCategory(Category.PROFILER);
+
+        Msg("Profiler started");
     }
 
     public static void Stop()
@@ -171,8 +173,17 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
         {
-            harmony.UnpatchCategory(key.Key.ToString());
+            try
+            {
+                Msg($"Unpatching {key.Key}");
+                harmony.UnpatchCategory(key.Key.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug(e);
+            }
         }
+
         harmony.UnpatchCategory(Category.PROFILER);
 
         if (config?.GetValue(writeToFileKey) == true)
@@ -183,5 +194,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Writer?.Dispose();
         WorldElementHelper.Clear();
         Panel = null;
+
+        Msg("Profiler stopped");
     }
 }

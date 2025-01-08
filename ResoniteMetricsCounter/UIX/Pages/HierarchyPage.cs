@@ -32,7 +32,7 @@ internal sealed class HierarchyPage : MetricsPageBase
                     column.Value = metric.Target.Name;
                     break;
                 case 1:
-                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.00}ms";
+                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.000}ms";
                     break;
                 case 2:
                     column.Value = $"{(double)metric.Ticks / maxTicks:0.00%}";

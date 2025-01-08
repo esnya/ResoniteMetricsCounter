@@ -16,6 +16,11 @@ public class Metric<T> where T : IWorldElement
     [JsonInclude] public T Target { get; private set; }
 
     /// <summary>
+    /// Stage of the metric.
+    /// </summary>  
+    [JsonInclude] public MetricStage Stage { get; private set; }
+
+    /// <summary>
     /// Ticks of the metric.
     /// </summary>
     [JsonInclude] public long Ticks { get; private set; }
@@ -24,11 +29,13 @@ public class Metric<T> where T : IWorldElement
     /// Initializes a new instance of the <see cref="Metric{T}"/> class.
     /// </summary>
     /// <param name="target">The target element of the metric.</param>
+    /// <param name="stage">The stage of the metric. Default is <see cref="MetricStage.Unknown"/>.</param>
     /// <param name="ticks">The initial number of ticks. Default is 0.</param>
-    public Metric(T target, long ticks = 0)
+    public Metric(T target, long ticks, MetricStage stage)
     {
         Target = target;
         Ticks = ticks;
+        Stage = stage;
     }
 
     /// <summary>
@@ -40,28 +47,5 @@ public class Metric<T> where T : IWorldElement
     public void Add(long ticks)
     {
         Ticks += ticks;
-    }
-}
-
-/// <summary>
-/// Represents a metric that is associated with a specific world refresh stage.
-/// </summary>
-/// <typeparam name="T">The type of the target element, which must implement <see cref="IWorldElement"/>.</typeparam>
-public sealed class StageMetric<T> : Metric<T> where T : IWorldElement
-{
-    /// <summary>
-    /// World reflesh stage of the metric.
-    /// </summary>
-    [JsonInclude] public World.RefreshStage Stage { get; private set; }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="StageMetric{T}"/> class.
-    /// </summary>
-    /// <param name="stage">The world refresh stage of the metric.</param>
-    /// <param name="target">The target element of the metric.</param>
-    /// <param name="ticks">The initial number of ticks. Default is 0.</param>
-    public StageMetric(World.RefreshStage stage, T target, long ticks = 0) : base(target, ticks)
-    {
-        Stage = stage;
     }
 }
