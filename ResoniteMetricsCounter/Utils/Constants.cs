@@ -16,9 +16,13 @@ internal struct Constants
     {
         MetricStage.PhysicsMoved,
         MetricStage.Updates,
+        MetricStage.ProtoFluxRebuild,
+        MetricStage.ProtoFluxEvents,
         MetricStage.ProtoFluxUpdates,
         MetricStage.ProtoFluxContinuousChanges,
+        MetricStage.ProtoFluxDiscreteChangesPre,
         MetricStage.Changes,
+        MetricStage.ProtoFluxDiscreteChangesPost,
         MetricStage.Connectors,
         MetricStage.DynamicBoneChainPrepare,
         MetricStage.DynamicBoneChainOverlaps,

@@ -130,7 +130,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Error(e);
         }
@@ -156,13 +156,16 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         foreach (var key in stageConfigKeys)
         {
-            var collect = config?.GetValue(key.Value) ?? true;
-            if (collect)
+            if (GetStageConfigValue(key.Key))
             {
+                Msg($"Patching to profile {key.Key}");
                 harmony.PatchCategory(key.Key.ToString());
             }
         }
+
         harmony.PatchCategory(Category.PROFILER);
+
+        Msg("Profiler started");
     }
 
     public static void Stop()
@@ -170,8 +173,17 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
         {
-            harmony.UnpatchCategory(key.Key.ToString());
+            try
+            {
+                Msg($"Unpatching {key.Key}");
+                harmony.UnpatchCategory(key.Key.ToString());
+            }
+            catch (Exception e)
+            {
+                Debug(e);
+            }
         }
+
         harmony.UnpatchCategory(Category.PROFILER);
 
         if (config?.GetValue(writeToFileKey) == true)
@@ -182,5 +194,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Writer?.Dispose();
         WorldElementHelper.Clear();
         Panel = null;
+
+        Msg("Profiler stopped");
     }
 }

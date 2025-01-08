@@ -41,8 +41,9 @@ internal static class Metric_Profiler_Patch
         }
     }
 
-    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, params CodeMatch[] match)
+    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, CodeMatch match)
     {
+        ResoniteMod.Msg($"Patching method for {match}");
         return matcher
             .MatchStartForward(match)
             .ThrowIfNotMatchForward("Failed to inject profiler")
@@ -56,97 +57,54 @@ internal static class Metric_Profiler_Patch
             );
     }
 
-    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, int argumentIndex, params CodeMatch[] match)
+    private static IEnumerable<CodeInstruction> InjectProfiler(this IEnumerable<CodeInstruction> instructions, CodeMatch match)
     {
+        return new CodeMatcher(instructions).InjectProfiler(match).Instructions();
+    }
+
+
+    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, int argumentIndex, CodeMatch match)
+    {
+        ResoniteMod.Msg($"Patching method for {match}");
         return matcher
-            .MatchStartForward(match)
-            .ThrowIfNotMatchForward("Failed to inject profiler")
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => StartTimer())
-            )
-            .Advance(1)
-            .InsertAndAdvance(
-                CodeInstruction.LoadArgument(argumentIndex),
-                CodeInstruction.Call(() => Record(default!))
-            );
+        .MatchStartForward(match)
+        .ThrowIfNotMatchForward("Failed to inject profiler")
+        .InsertAndAdvance(
+            CodeInstruction.Call(() => StartTimer())
+        )
+        .Advance(1)
+        .InsertAndAdvance(
+            CodeInstruction.LoadArgument(argumentIndex),
+            CodeInstruction.Call(() => Record(default!))
+        );
+    }
+    private static IEnumerable<CodeInstruction> InjectProfiler(this IEnumerable<CodeInstruction> instructions, int argumentIndex, CodeMatch match)
+    {
+        return new CodeMatcher(instructions).InjectProfiler(argumentIndex, match).Instructions();
     }
 
-    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, MetricStage stage, params CodeMatch[] match)
+    private static CodeMatcher InjectProfiler(this CodeMatcher matcher, MetricStage stage, CodeMatch match)
     {
+        ResoniteMod.Msg($"Patching method for {match}");
         return matcher
-            .MatchStartForward(match)
-            .ThrowIfNotMatchForward("Failed to inject profiler")
-            .InsertAndAdvance(
-                CodeInstruction.Call(() => StartTimer()),
-                new CodeInstruction(OpCodes.Dup)
-            )
-            .Advance(1)
-            .InsertAndAdvance(
-                new CodeInstruction(OpCodes.Ldc_I4, (int)stage),
-                CodeInstruction.Call(() => Record(default!, stage))
-            );
+        .MatchStartForward(match)
+        .ThrowIfNotMatchForward("Failed to inject profiler")
+        .InsertAndAdvance(
+            CodeInstruction.Call(() => StartTimer()),
+            new CodeInstruction(OpCodes.Dup)
+        )
+        .Advance(1)
+        .InsertAndAdvance(
+            new CodeInstruction(OpCodes.Ldc_I4, (int)stage),
+            CodeInstruction.Call(() => Record(default!, stage))
+        );
     }
-
-
-
-    [HarmonyPatchCategory("ProtoFluxUpdates")]
-    [HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunNodeUpdates))]
-    private static class RunNodeUpdates_Patch
+    private static IEnumerable<CodeInstruction> InjectProfiler(this IEnumerable<CodeInstruction> instructions, MetricStage stage, CodeMatch match)
     {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for ProtoFluxUpdates");
-            return new CodeMatcher(instructions).InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeUpdates())).Instructions();
-        }
+        return new CodeMatcher(instructions).InjectProfiler(stage, match).Instructions();
     }
 
-    [HarmonyPatchCategory("ProtoFluxContinuousChanges")]
-    [HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunContinuousChanges))]
-    private static class RunContinuousChanges_Patch
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for ProtoFluxContinuousChanges");
-            return new CodeMatcher(instructions).InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges())).Instructions();
-        }
-    }
-
-    [HarmonyPatchCategory("Updates")]
-
-    [HarmonyPatch(typeof(UpdateManager), nameof(UpdateManager.RunUpdates))]
-    private static class RunUpdates_Patch
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for Updates");
-            return new CodeMatcher(instructions).InjectProfiler(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunUpdate())).Instructions();
-        }
-    }
-
-    [HarmonyPatchCategory(nameof(World.RefreshStage.Changes))]
-    [HarmonyPatch(typeof(UpdateManager), "ProcessChange")]
-    private static class ProcessChange_Patch
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for Changes");
-            return new CodeMatcher(instructions).InjectProfiler(1, CodeMatch.Calls(() => default(IUpdatable)!.InternalRunApplyChanges(default))).Instructions();
-        }
-    }
-
-    [HarmonyPatchCategory("Connectors")]
-    [HarmonyPatch(typeof(UpdateManager), "ProcessConnectorUpdate")]
-    private static class ProcessConnectorUpdate_Patch
-    {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for Connectors");
-            return new CodeMatcher(instructions).InjectProfiler(1, CodeMatch.Calls(() => default(IImplementable)!.InternalUpdateConnector())).Instructions();
-        }
-    }
-
-    [HarmonyPatchCategory("PhysicsMoved")]
-    [HarmonyPatch]
+    [HarmonyPatchCategory("PhysicsMoved"), HarmonyPatch]
     internal static class PhysicsMovedHierarchyEventManager_RunMovedEvent_Patch
     {
         internal static MethodBase TargetMethod()
@@ -166,58 +124,86 @@ internal static class Metric_Profiler_Patch
     }
 
 
-    [HarmonyPatchCategory(Category.PROFILER)]
-    [HarmonyPatch(typeof(DynamicBoneChainManager), nameof(DynamicBoneChainManager.Update))]
-    internal static class DynamicBoneChainManager_Update_Patch
+    [HarmonyPatchCategory("Updates"), HarmonyPatch(typeof(UpdateManager), nameof(UpdateManager.RunUpdates))]
+    private static class UpdateManager_RunUpdates_Patch
     {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var matcher = new CodeMatcher(instructions);
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(IUpdatable)!.InternalRunUpdate()));
+    }
 
-            if (ResoniteMetricsCounterMod.GetStageConfigValue(MetricStage.DynamicBoneChainPrepare))
-            {
-                ResoniteMod.Debug("Patching method for DynamicBoneChainPrepare");
-                matcher.InjectProfiler(MetricStage.DynamicBoneChainPrepare, CodeMatch.Calls(AccessTools.Method(typeof(DynamicBoneChain), "Prepare")));
-            }
+    [HarmonyPatchCategory("Changes"), HarmonyPatch(typeof(UpdateManager), "ProcessChange")]
+    internal static class UpdateManager_ProcessChange_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(1, CodeMatch.Calls(() => default(IUpdatable)!.InternalRunApplyChanges(default)));
+    }
 
-            if (ResoniteMetricsCounterMod.GetStageConfigValue(MetricStage.DynamicBoneChainFinish))
-            {
-                ResoniteMod.Debug("Patching method for DynamicBoneChainFinish");
-                matcher.InjectProfiler(MetricStage.DynamicBoneChainFinish, CodeMatch.Calls(AccessTools.Method(typeof(DynamicBoneChain), "FinishSimulation")));
-            }
+    [HarmonyPatchCategory("Connectors"), HarmonyPatch(typeof(UpdateManager), "ProcessConnectorUpdate")]
+    internal static class UpdateManager_ProcessConnectorUpdate_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(1, CodeMatch.Calls(() => default(IImplementable)!.InternalUpdateConnector()));
+    }
 
-            return matcher.Instructions();
-        }
+    [HarmonyPatchCategory("ProtoFluxRebuild"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RebuildChangeTracking))]
+    private static class ProtoFluxController_RebuildChangeTracking_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RebuildChangeTracking()));
+    }
+
+
+    [HarmonyPatchCategory("ProtoFluxRebuild"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.Rebuild))]
+    private static class ProtoFluxController_Rebuild_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.Rebuild()));
+    }
+
+
+    [HarmonyPatchCategory("ProtoFluxEvents"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunNodeEvents))]
+    private static class ProtoFluxController_RunNodeEvents_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeEvents()));
+    }
+
+
+    [HarmonyPatchCategory("ProtoFluxUpdates"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunNodeUpdates))]
+    private static class ProtoFluxController_RunNodeUpdates_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeUpdates()));
+    }
+
+
+    [HarmonyPatchCategory("ProtoFluxContinuousChanges"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunContinuousChanges))]
+    private static class ProtoFluxController_RunContinuousChanges_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges()));
+    }
+
+    [HarmonyPatchCategory("ProtoFluxDiscreteChangesPre"), HarmonyPatch(typeof(ProtoFluxController), nameof(ProtoFluxController.RunDiscreteChanges))]
+    private static class ProtoFluxController_RunDiscreteChanges_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(() => default(ProtoFluxNodeGroup)!.RunNodeChanges()));
+    }
+
+    [HarmonyPatchCategory("DynamicBoneChainPrepare"), HarmonyPatch(typeof(DynamicBoneChainManager), nameof(DynamicBoneChainManager.Update))]
+    internal static class DynamicBoneChain_Prepare_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(typeof(DynamicBoneChain).Method("Prepare")));
     }
 
     [HarmonyPatchCategory("DynamicBoneChainOverlap")]
-    [HarmonyPatch]
     internal static class CollisionHandler_Handle_Patch
     {
-        internal static MethodBase TargetMethod()
-        {
-            return typeof(DynamicBoneChainManager).Inner("CollisionHandler").Method("Handle");
-        }
-
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for DynamicBoneChainOverlap");
-            return new CodeMatcher(instructions)
-                .InjectProfiler(MetricStage.DynamicBoneChainOverlaps, CodeMatch.Calls(typeof(DynamicBoneChain).Method("ScheduleCollision")))
-                .Instructions();
-        }
+        internal static MethodBase TargetMethod() => typeof(DynamicBoneChainManager).Inner("CollisionHandler").Method("Handle");
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(MetricStage.DynamicBoneChainOverlaps, CodeMatch.Calls(typeof(DynamicBoneChain).Method("ScheduleCollision")));
     }
 
-    [HarmonyPatchCategory("DynamicBoneChainSimulation")]
-    [HarmonyPatch(typeof(DynamicBoneChainManager), "SimulateChain")]
+    [HarmonyPatchCategory("DynamicBoneChainSimulation"), HarmonyPatch(typeof(DynamicBoneChainManager), "SimulateChain")]
     private static class DynamicBoneChainManager_SimulateChain_Patch
     {
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            ResoniteMod.Debug("Patching method for DynamicBoneChainSimulation");
-            return new CodeMatcher(instructions)
-                .InjectProfiler(MetricStage.DynamicBoneChainSimulation, CodeMatch.Calls(AccessTools.Method(typeof(DynamicBoneChain), "RunSimulation")))
-                .Instructions();
-        }
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(MetricStage.DynamicBoneChainSimulation, CodeMatch.Calls(typeof(DynamicBoneChain).Method("RunSimulation")));
+    }
+
+    [HarmonyPatchCategory("DynamicBoneChainFinish"), HarmonyPatch(typeof(DynamicBoneChainManager), "Update")]
+    internal static class DynamicBoneChain_FinishSimulation_Patch
+    {
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(CodeMatch.Calls(AccessTools.Method(typeof(DynamicBoneChain), "FinishSimulation")));
     }
 }
