@@ -18,11 +18,6 @@ using System.Runtime.CompilerServices;
 
 
 
-
-
-
-
-
 #if DEBUG
 using ResoniteHotReloadLib;
 #endif
@@ -68,6 +63,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
+    private static bool isRunning;
+    private static Slot? old_slot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetStageConfigValue(MetricStage stage)
@@ -118,7 +115,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
 #endif
 
-        DevCreateNewForm.AddAction("/Editor", menuActionLabel, Start);
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, initPanel);
     }
 #if DEBUG
 
@@ -147,11 +144,44 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
-    public static void Start(Slot slot)
+    public static void initPanel(Slot slot)
     {
+        if (Panel is not null)
+        {
+           Panel.DisableStopButton();
+        }
+
+        if (old_slot is not null && isRunning is true)
+        {
+            Stop();
+        }
+
+        Start(slot);
+    }
+
+    public static void Start(Slot slot = null)
+    {
+        if (slot == null)
+        {
+            //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
+            slot = old_slot;
+            if (Panel != null)
+            {
+                //Msg("Disposing Panel");
+                Panel.Dispose();
+                Panel = null;
+            }
+        }
+        else
+        {
+            //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
+            old_slot = slot;
+        }
+        isRunning = true;
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
+
         Panel = new MetricsPanel(slot, Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
 
         foreach (var key in stageConfigKeys)
@@ -167,9 +197,16 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         Msg("Profiler started");
     }
-
+    
     public static void Stop()
     {
+        if (!isRunning)
+        {
+            isRunning = true;
+            Start();
+            return;
+        }
+        isRunning = false;
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
         {
@@ -193,7 +230,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         Writer?.Dispose();
         WorldElementHelper.Clear();
-        Panel = null;
+
+        
 
         Msg("Profiler stopped");
     }
