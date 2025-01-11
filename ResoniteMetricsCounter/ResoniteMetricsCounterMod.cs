@@ -163,18 +163,18 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         if (slot == null)
         {
-            Msg("Assigning field \'old_slot\' to \'slot\' local variable");
+            //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
             slot = old_slot;
             if (Panel != null)
             {
-                Msg("Disposing Panel");
+                //Msg("Disposing Panel");
                 Panel.Dispose();
                 Panel = null;
             }
         }
         else
         {
-            Msg("Assigning local variable \'slot\' to \'old_slot\' field");
+            //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
             old_slot = slot;
         }
         isRunning = true;
