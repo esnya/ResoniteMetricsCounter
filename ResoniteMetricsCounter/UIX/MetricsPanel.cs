@@ -106,6 +106,8 @@ internal sealed class MetricsPanel
     private void BuildStopButtonUI(in UIBuilder uiBuilder)
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
+        //stopButton = button;
+      
         button.LocalPressed += (_, _) =>
         {
             foreach (var page in pages)
@@ -113,7 +115,8 @@ internal sealed class MetricsPanel
                 page.Value.Update(metricsCounter, maxItems);
             }
             ResoniteMetricsCounterMod.Stop();
-            button.Enabled = false;
+            //button.Enabled = false;
+            button.LabelText = "Restart Profiler";
         };
     }
 
@@ -319,5 +322,9 @@ internal sealed class MetricsPanel
                 page.Value.Update(metricsCounter, maxItems);
             }
         }
+    }
+    public void Dispose()
+    {
+        slot?.Dispose();
     }
 }
