@@ -25,6 +25,7 @@ internal sealed class MetricsPanel
     private readonly int maxItems;
     private readonly Slot? pagesButtonContainer;
     private readonly Slot? pagesContainer;
+    private Button? stopButton;
 
     private Sync<string>? framesField;
     private Sync<string>? elapsedTimeField;
@@ -106,7 +107,7 @@ internal sealed class MetricsPanel
     private void BuildStopButtonUI(in UIBuilder uiBuilder)
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
-        //stopButton = button;
+        stopButton = button;
       
         button.LocalPressed += (_, _) =>
         {
@@ -326,5 +327,10 @@ internal sealed class MetricsPanel
     public void Dispose()
     {
         slot?.Dispose();
+    }
+
+    public void DisableStopButton()
+    {
+        stopButton.Enabled = false;
     }
 }
