@@ -94,7 +94,10 @@ internal sealed class MetricsPanel
     private static UIBuilder CreatePanel(in Slot slot, in float2 size)
     {
         slot.PersistentSelf = true;
-        slot.OnPrepareDestroy += (_) => ResoniteMetricsCounterMod.Stop();
+        slot.OnPrepareDestroy += (_) =>
+        {
+            ResoniteMetricsCounterMod.SetRunning(false);
+        };
 
         slot.Tag = "Developer";
         slot.LocalScale = float3.One * 0.00075f;
@@ -115,7 +118,7 @@ internal sealed class MetricsPanel
             {
                 page.Value.Update(metricsCounter, maxItems);
             }
-            ResoniteMetricsCounterMod.Stop();
+            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
             //button.Enabled = false;
             button.LabelText = "Restart Profiler";
         };

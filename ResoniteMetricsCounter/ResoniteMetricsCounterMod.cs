@@ -1,25 +1,20 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
 using Elements.Core;
-
+using FrooxEngine;
 using HarmonyLib;
-
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.Patch;
 using ResoniteMetricsCounter.UIX;
-
-using ResoniteModLoader;
-using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
+using ResoniteModLoader;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 
 
 #if DEBUG
-using ResoniteHotReloadLib;
 #endif
 
 namespace ResoniteMetricsCounter;
@@ -63,7 +58,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
-    private static bool isRunning;
+    public static bool isRunning { get; private set; }
     private static Slot? old_slot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,7 +118,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         try
         {
-            Stop();
+            SetRunning(true);//check this line, I might have gotten this true/false value wrong.
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
@@ -148,29 +143,34 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         if (Panel is not null)
         {
-           Panel.DisableStopButton();
+            Panel.DisableStopButton();
         }
 
         if (old_slot is not null && isRunning is true)
         {
-            Stop();
+            SetRunning(false);
         }
 
         Start(slot);
     }
 
-    public static void Start(Slot slot = null)
+    private static void Start(Slot slot = null)
     {
         if (slot == null)
         {
             //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
-            slot = old_slot;
+            if (old_slot == null)
+            {
+                throw new ArgumentNullException(nameof(slot));
+            }
             if (Panel != null)
             {
                 //Msg("Disposing Panel");
                 Panel.Dispose();
                 Panel = null;
             }
+            old_slot.DestroyChildren();
+            slot = old_slot;
         }
         else
         {
@@ -197,15 +197,9 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         Msg("Profiler started");
     }
-    
-    public static void Stop()
+
+    private static void Stop()
     {
-        if (!isRunning)
-        {
-            isRunning = true;
-            Start();
-            return;
-        }
         isRunning = false;
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
@@ -231,8 +225,26 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Writer?.Dispose();
         WorldElementHelper.Clear();
 
-        
+
 
         Msg("Profiler stopped");
+    }
+
+    public static void SetRunning(bool shouldRun)
+    {
+        if (shouldRun == isRunning)
+        {
+            return;//nothing to do
+        }
+
+        if (shouldRun)
+        {
+            Start();
+        }
+        else
+        {
+            Stop();
+        }
+
     }
 }
