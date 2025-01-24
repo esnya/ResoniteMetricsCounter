@@ -163,14 +163,14 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             {
                 throw new ArgumentNullException(nameof(slot));
             }
+            slot = old_slot;
+            old_slot.DestroyChildren();
             if (Panel != null)
             {
                 //Msg("Disposing Panel");
                 Panel.Dispose();
                 Panel = null;
             }
-            old_slot.DestroyChildren();
-            slot = old_slot;
         }
         else
         {
