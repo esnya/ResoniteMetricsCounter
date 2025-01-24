@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 
 
 #if DEBUG
+using ResoniteHotReloadLib;
 #endif
 
 namespace ResoniteMetricsCounter;
@@ -59,7 +60,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
     public static bool isRunning { get; private set; }
-    private static Slot? old_slot;
+    private static Slot? lastUsedSlot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetStageConfigValue(MetricStage stage)
@@ -118,7 +119,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         try
         {
-            SetRunning(true);//check this line, I might have gotten this true/false value wrong.
+            SetRunning(false);//check this line, I might have gotten this true/false value wrong.
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
@@ -146,7 +147,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             Panel.DisableStopButton();
         }
 
-        if (old_slot is not null && isRunning is true)
+        if (lastUsedSlot is not null && isRunning is true)
         {
             SetRunning(false);
         }
@@ -159,12 +160,12 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         if (slot == null)
         {
             //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
-            if (old_slot == null)
+            if (lastUsedSlot == null)
             {
                 throw new ArgumentNullException(nameof(slot));
             }
-            slot = old_slot;
-            old_slot.DestroyChildren();
+            slot = lastUsedSlot;
+            lastUsedSlot.DestroyChildren();
             if (Panel != null)
             {
                 //Msg("Disposing Panel");
@@ -175,7 +176,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         else
         {
             //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
-            old_slot = slot;
+            lastUsedSlot = slot;
         }
         isRunning = true;
         Msg("Starting Profiler");
