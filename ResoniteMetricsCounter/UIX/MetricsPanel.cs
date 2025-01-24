@@ -26,7 +26,6 @@ internal sealed class MetricsPanel
     private readonly Slot? pagesButtonContainer;
     private readonly Slot? pagesContainer;
     private Button? stopButton;
-    private int numInspectors = 0;
 
     private Sync<string>? framesField;
     private Sync<string>? elapsedTimeField;
@@ -37,6 +36,8 @@ internal sealed class MetricsPanel
     private Sync<string>? avgTotalTimeField;
     private Sync<string>? avgMaxTimeField;
     private Sync<string>? fpsField;
+
+    private static bool isProfiling = true;
 
     public MetricsPanel(Slot slot, MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
@@ -97,7 +98,11 @@ internal sealed class MetricsPanel
         slot.PersistentSelf = true;
         slot.OnPrepareDestroy += (_) =>
         {
-            ResoniteMetricsCounterMod.SetRunning(false);
+            if (isProfiling)
+            {
+                ResoniteMetricsCounterMod.SetRunning(false);
+            }
+            
         };
 
         slot.Tag = "Developer";
@@ -122,6 +127,7 @@ internal sealed class MetricsPanel
             ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
             //button.Enabled = false;
             button.LabelText = "Restart Profiler";
+            isProfiling = false;
         };
     }
 
