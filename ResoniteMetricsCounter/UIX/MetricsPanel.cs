@@ -26,6 +26,7 @@ internal sealed class MetricsPanel
     private readonly Slot? pagesButtonContainer;
     private readonly Slot? pagesContainer;
     private Button? stopButton;
+    private int numInspectors = 0;
 
     private Sync<string>? framesField;
     private Sync<string>? elapsedTimeField;
