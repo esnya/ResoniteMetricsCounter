@@ -36,6 +36,7 @@ internal sealed class MetricsPanel
     private Sync<string>? avgTotalTimeField;
     private Sync<string>? avgMaxTimeField;
     private Sync<string>? fpsField;
+    private float nextUpdateTime;
 
     private static bool isProfiling = true;
 
@@ -102,7 +103,7 @@ internal sealed class MetricsPanel
             {
                 ResoniteMetricsCounterMod.SetRunning(false);
             }
-            
+
         };
 
         slot.Tag = "Developer";
@@ -117,7 +118,7 @@ internal sealed class MetricsPanel
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
         stopButton = button;
-      
+
         button.LocalPressed += (_, _) =>
         {
             foreach (var page in pages)
@@ -270,6 +271,15 @@ internal sealed class MetricsPanel
         }
 
         metricsCounter.OnUpdate();
+
+        var worldTime = slot.World.Time.WorldTimeFloat;
+        if (worldTime < nextUpdateTime)
+        {
+            return;
+        }
+
+        nextUpdateTime = worldTime + ResoniteMetricsCounterMod.uiUpdateInterval;
+
 
         var frames = metricsCounter.FrameCount;
 

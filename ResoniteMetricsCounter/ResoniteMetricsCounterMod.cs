@@ -53,9 +53,14 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     [AutoRegisterConfigKey]
     private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
 
+    [AutoRegisterConfigKey]
+    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey = new("UIUpdateInterval", "Interval in seconds to update the UI.", computeDefault: () => 0.1f);
+
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? Panel { get; private set; }
     internal static MetricsCounter? Writer { get; private set; }
+    public static float uiUpdateInterval { get; private set; }
+
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
@@ -105,6 +110,9 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             {
                 collectStage[p.Key] = config.GetValue(p.Value);
             }
+
+            uiUpdateInterval = config.GetValue(uiUpdateIntervalKey);
+            uiUpdateIntervalKey.OnChanged += value => uiUpdateInterval = (float)value!;
         }
 
 #if DEBUG

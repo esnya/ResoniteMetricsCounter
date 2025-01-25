@@ -62,7 +62,6 @@ public static class MetricStageUtils
         MetricStage.ProtoFluxUpdates,
         MetricStage.ProtoFluxContinuousChanges,
         MetricStage.Changes,
-        MetricStage.ParticleSystems,
         MetricStage.DynamicBoneChainSimulation,
         MetricStage.DynamicBoneChainFinish,
     };
