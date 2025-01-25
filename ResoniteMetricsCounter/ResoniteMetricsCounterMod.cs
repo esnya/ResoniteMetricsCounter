@@ -1,25 +1,16 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
 using Elements.Core;
-
+using FrooxEngine;
 using HarmonyLib;
-
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.Patch;
 using ResoniteMetricsCounter.UIX;
-
-using ResoniteModLoader;
-using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
+using ResoniteModLoader;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-
-
-
-
-
 
 
 
@@ -68,6 +59,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
+    public static bool isRunning { get; private set; }
+    private static Slot? lastUsedSlot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetStageConfigValue(MetricStage stage)
@@ -118,7 +111,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
 #endif
 
-        DevCreateNewForm.AddAction("/Editor", menuActionLabel, Start);
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, initPanel);
     }
 #if DEBUG
 
@@ -126,7 +119,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         try
         {
-            Stop();
+            SetRunning(false);//check this line, I might have gotten this true/false value wrong.
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
@@ -147,11 +140,49 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
-    public static void Start(Slot slot)
+    public static void initPanel(Slot slot)
     {
+        if (Panel is not null)
+        {
+            Panel.DisableStopButton();
+        }
+
+        if (lastUsedSlot is not null && isRunning is true)
+        {
+            SetRunning(false);
+        }
+
+        Start(slot);
+    }
+
+    private static void Start(Slot slot = null)
+    {
+        if (slot == null)
+        {
+            //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
+            if (lastUsedSlot == null)
+            {
+                throw new ArgumentNullException(nameof(slot));
+            }
+            slot = lastUsedSlot;
+            lastUsedSlot.DestroyChildren();
+            if (Panel != null)
+            {
+                //Msg("Disposing Panel");
+                Panel.Dispose();
+                Panel = null;
+            }
+        }
+        else
+        {
+            //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
+            lastUsedSlot = slot;
+        }
+        isRunning = true;
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
+
         Panel = new MetricsPanel(slot, Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
 
         foreach (var key in stageConfigKeys)
@@ -168,8 +199,9 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Msg("Profiler started");
     }
 
-    public static void Stop()
+    private static void Stop()
     {
+        isRunning = false;
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
         {
@@ -193,8 +225,27 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
         Writer?.Dispose();
         WorldElementHelper.Clear();
-        Panel = null;
+
+
 
         Msg("Profiler stopped");
+    }
+
+    public static void SetRunning(bool shouldRun)
+    {
+        if (shouldRun == isRunning)
+        {
+            return;//nothing to do
+        }
+
+        if (shouldRun)
+        {
+            Start();
+        }
+        else
+        {
+            Stop();
+        }
+
     }
 }

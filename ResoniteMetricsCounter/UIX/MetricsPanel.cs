@@ -25,6 +25,7 @@ internal sealed class MetricsPanel
     private readonly int maxItems;
     private readonly Slot? pagesButtonContainer;
     private readonly Slot? pagesContainer;
+    private Button? stopButton;
 
     private Sync<string>? framesField;
     private Sync<string>? elapsedTimeField;
@@ -35,6 +36,8 @@ internal sealed class MetricsPanel
     private Sync<string>? avgTotalTimeField;
     private Sync<string>? avgMaxTimeField;
     private Sync<string>? fpsField;
+
+    private static bool isProfiling = true;
 
     public MetricsPanel(Slot slot, MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
@@ -93,7 +96,14 @@ internal sealed class MetricsPanel
     private static UIBuilder CreatePanel(in Slot slot, in float2 size)
     {
         slot.PersistentSelf = true;
-        slot.OnPrepareDestroy += (_) => ResoniteMetricsCounterMod.Stop();
+        slot.OnPrepareDestroy += (_) =>
+        {
+            if (isProfiling)
+            {
+                ResoniteMetricsCounterMod.SetRunning(false);
+            }
+            
+        };
 
         slot.Tag = "Developer";
         slot.LocalScale = float3.One * 0.00075f;
@@ -106,14 +116,18 @@ internal sealed class MetricsPanel
     private void BuildStopButtonUI(in UIBuilder uiBuilder)
     {
         var button = uiBuilder.Button("Stop Profiling", RadiantUI_Constants.Hero.RED);
+        stopButton = button;
+      
         button.LocalPressed += (_, _) =>
         {
             foreach (var page in pages)
             {
                 page.Value.Update(metricsCounter, maxItems);
             }
-            ResoniteMetricsCounterMod.Stop();
-            button.Enabled = false;
+            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
+            //button.Enabled = false;
+            button.LabelText = "Restart Profiler";
+            isProfiling = false;
         };
     }
 
@@ -319,5 +333,14 @@ internal sealed class MetricsPanel
                 page.Value.Update(metricsCounter, maxItems);
             }
         }
+    }
+    public void Dispose()
+    {
+        slot?.Dispose();
+    }
+
+    public void DisableStopButton()
+    {
+        stopButton.Enabled = false;
     }
 }
