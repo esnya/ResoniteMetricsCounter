@@ -2,7 +2,8 @@
 
 A [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader) mod for [Resonite](https://resonite.com/).
 
-![Gei1YYFaQAAsnlv](https://github.com/user-attachments/assets/0d8497a4-1b74-4977-8aff-036ad2b588c5)
+![image](https://github.com/user-attachments/assets/e4a11a7b-b122-416a-85db-20a51d9eb658)
+![image](https://github.com/user-attachments/assets/bdaccc83-55e3-4621-aba9-c15b39bfbccd)
 
 This mod provides a simple performance metrics counter for Resonite, useful for world optimisation.
 It can measure execution times for components and ProtoFlux node groups.
