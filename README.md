@@ -10,11 +10,11 @@ These execution times are measured per `RefreshStage`, helping you to identify a
 
 ## Recommended Usage
 
-> **Tip:** Before using this mod, it is recommended to first check the Debug options in the DashMenu. For example, the "Focused World" and "Physics" tabs provide accurate values for each stage without any overhead. Once you have identified potential performance issues, you can use this mod to pinpoint specific components or slots causing the problem.
+**Tip:** Before using this mod, it is recommended to first check the Debug options in the DashMenu. For example, the "Focused World" and "Physics" tabs provide accurate values for each stage without any overhead. Once you have identified potential performance issues, you can use this mod to pinpoint specific components or slots causing the problem.
 
 ## Understanding Performance Metrics
 
-> **Important:** This mod shows performance data to help you find and fix slow parts of your world. But, be careful when reading the data. Here are some tips:
+**Important:** This mod shows performance data to help you find and fix slow parts of your world. But, be careful when reading the data. Here are some tips:
 
 1. **Context Matters**: High numbers do not always mean a problem. It might just be a complex task.
 
@@ -28,7 +28,7 @@ By following these tips, you can use this mod to make your world better and help
 
 ## Important Notes on Metrics
 
-> **Note:** The metrics from this mod have limits:
+**Note:** The metrics from this mod have limits:
 
 1. **Not Perfect**: The numbers may not be 100% correct or complete. This mod is not part of the engine, so perfect accuracy is not possible.
 
