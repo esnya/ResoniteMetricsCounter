@@ -8,6 +8,32 @@ This mod provides a simple performance metrics counter for Resonite, useful for 
 It can measure execution times for components and ProtoFlux node groups.
 These execution times are measured per `RefreshStage`, helping you to identify and fix performance bottlenecks in your world.
 
+## Recommended Usage
+
+> **Tip:** Before using this mod, it is recommended to first check the Debug options in the DashMenu. For example, the "Focused World" and "Physics" tabs provide accurate values for each stage without any overhead. Once you have identified potential performance issues, you can use this mod to pinpoint specific components or slots causing the problem.
+
+## Understanding Performance Metrics
+
+> **Important:** This mod shows performance data to help you find and fix slow parts of your world. But, be careful when reading the data. Here are some tips:
+
+1. **Context Matters**: High numbers do not always mean a problem. It might just be a complex task.
+
+2. **Compare Wisely**: Only compare data from the same world or setup. Different setups can give different results.
+
+3. **Focus on Big Issues**: Fix the parts that slow down your world the most. Small issues might not need fixing right away.
+
+4. **Work Together**: Share your findings with others. Avoid blaming without understanding the full picture.
+
+By following these tips, you can use this mod to make your world better and help the community.
+
+## Important Notes on Metrics
+
+> **Note:** The metrics from this mod have limits:
+
+1. **Not Perfect**: The numbers may not be 100% correct or complete. This mod is not part of the engine, so perfect accuracy is not possible.
+
+2. **ProtoFlux Node Groups**: For ProtoFlux, the mod measures NodeGroups, not individual Nodes. NodeGroups have many Nodes, so their numbers can be bigger than components.
+
 ## Installation
 
 1. Install the [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader).
