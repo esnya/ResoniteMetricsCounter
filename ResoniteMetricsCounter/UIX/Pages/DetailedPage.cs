@@ -1,4 +1,5 @@
 ﻿using FrooxEngine;
+using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
 using ResoniteMetricsCounter.Utils;
@@ -18,14 +19,21 @@ internal sealed class DetailedPage : MetricsPageBase
 
         protected override IWorldElement? GetReference(in Metric<IWorldElement> metric)
         {
-            return metric.Target.GetSlotFast();
+            var slot = metric.Target.GetSlotFast();
+            return metric.Target is ProtoFluxNode ? slot?.Parent : slot;
         }
 
         protected override long GetTicks(in Metric<IWorldElement> metric)
         {
             return metric.Ticks;
         }
-        protected override void UpdateColumn(in Metric<IWorldElement> metric, Sync<string> column, int i, long maxTicks, long totalTicks, long frameCount)
+        protected override void UpdateColumn(
+            in Metric<IWorldElement> metric,
+            Sync<string> column,
+            int i,
+            long maxTicks,
+            long totalTicks,
+            long frameCount)
         {
             switch (i)
             {
@@ -36,10 +44,10 @@ internal sealed class DetailedPage : MetricsPageBase
                     column.Value = metric.Target.GetSlotFast()?.Parent?.Name!;
                     break;
                 case 2:
-                    column.Value = metric.Target.GetSlotFast()?.Name!;
+                    column.Value = GetReference(metric)?.Name!;
                     break;
                 case 3:
-                    column.Value = metric.Target.Name;
+                    column.Value = metric.Target is ProtoFluxNode node ? node.Group.Name : metric.Target.Name;
                     break;
                 case 4:
                     column.Value = $"{metric.Stage}";
