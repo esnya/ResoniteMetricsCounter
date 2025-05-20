@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using System;
 using System.Collections.Generic;
@@ -224,3 +224,4 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorl
         return result;
     }
 }
+

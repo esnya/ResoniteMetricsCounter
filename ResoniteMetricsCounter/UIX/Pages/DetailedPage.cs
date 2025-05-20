@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
@@ -109,3 +109,4 @@ internal sealed class DetailedPage : MetricsPageBase
         }
     }
 }
+

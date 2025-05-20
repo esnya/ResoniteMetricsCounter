@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
@@ -354,3 +354,4 @@ internal sealed class MetricsPanel
         stopButton.Enabled = false;
     }
 }
+

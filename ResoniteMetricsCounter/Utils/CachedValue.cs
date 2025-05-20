@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using System;
 using System.Collections.Concurrent;
@@ -86,3 +86,4 @@ internal abstract class CachedElementValueBase<T, U> : CachedValueBase<T, RefID,
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override RefID GetKey(in T source) => source.ReferenceID;
 }
+

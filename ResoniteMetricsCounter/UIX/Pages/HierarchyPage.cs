@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
 using System.Collections.Generic;
@@ -83,3 +83,4 @@ internal sealed class HierarchyPage : MetricsPageBase
         }
     }
 }
+

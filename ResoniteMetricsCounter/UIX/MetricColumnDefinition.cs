@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Utils;
@@ -46,3 +46,4 @@ internal struct MetricColumnDefinition
         uiBuilder.PopStyle();
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using System;
@@ -36,3 +36,4 @@ internal abstract class MetricsPageBase : IDisposable
         container?.Dispose();
     }
 }
+
