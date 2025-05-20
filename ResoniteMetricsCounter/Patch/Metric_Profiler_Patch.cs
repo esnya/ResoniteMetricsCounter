@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using FrooxEngine.PhotonDust;
 using FrooxEngine.ProtoFlux;
 using HarmonyLib;
@@ -310,3 +310,4 @@ internal static class Metric_Profiler_Patch
         internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions.InjectProfiler(MetricStage.DynamicBoneChainOverlaps, CodeMatch.Calls(typeof(DynamicBoneChain).Method("ScheduleCollision")));
     }
 }
+

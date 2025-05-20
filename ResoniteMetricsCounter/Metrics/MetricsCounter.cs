@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Serialization;
@@ -180,3 +180,4 @@ internal sealed class MetricsCounter : IDisposable
         FrameCount++;
     }
 }
+

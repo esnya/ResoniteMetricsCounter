@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Utils;
@@ -81,3 +81,4 @@ internal abstract class MetricPageItemBase<T>
         return true;
     }
 }
+

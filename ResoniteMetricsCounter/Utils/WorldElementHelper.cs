@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.Utils;
@@ -40,7 +40,7 @@ internal static class WorldElementHelper
 
     private static readonly CachedElementName nameCache = new();
     private static readonly CachedElementSlot slotCache = new();
-    private static readonly CachedGetMetricObjectRoot getMetricObjectRooCachet = new();
+    private static readonly CachedGetMetricObjectRoot getMetricObjectRootCache = new();
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -56,13 +56,14 @@ internal static class WorldElementHelper
 
     public static Slot? GetMetricObjectRoot(this IWorldElement element)
     {
-        return getMetricObjectRooCachet.GetOrCache(element);
+        return getMetricObjectRootCache.GetOrCache(element);
     }
 
     public static void Clear()
     {
         nameCache.Clear();
         slotCache.Clear();
-        getMetricObjectRooCachet.Clear();
+        getMetricObjectRootCache.Clear();
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using System.Collections.Generic;
 
 namespace ResoniteMetricsCounter.Metrics;
@@ -66,3 +66,4 @@ public static class MetricStageUtils
         MetricStage.DynamicBoneChainFinish,
     };
 }
+

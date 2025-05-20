@@ -119,7 +119,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
 #endif
 
-        DevCreateNewForm.AddAction("/Editor", menuActionLabel, initPanel);
+        DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
     }
 #if DEBUG
 
@@ -148,7 +148,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
     }
 
-    public static void initPanel(Slot slot)
+    public static void InitPanel(Slot slot)
     {
         if (Panel is not null)
         {
@@ -257,3 +257,4 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     }
 }
+

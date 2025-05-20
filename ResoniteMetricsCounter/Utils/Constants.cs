@@ -1,4 +1,4 @@
-﻿namespace ResoniteMetricsCounter.Utils;
+namespace ResoniteMetricsCounter.Utils;
 
 internal struct Constants
 {
@@ -9,3 +9,4 @@ internal struct Constants
     public const float SPACING = 8;
     public const float FLEX = 1;
 }
+

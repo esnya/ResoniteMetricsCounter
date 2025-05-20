@@ -1,4 +1,4 @@
-﻿using Elements.Core;
+using Elements.Core;
 using FrooxEngine;
 using ResoniteMetricsCounter.Utils;
 using System;
@@ -63,3 +63,4 @@ internal sealed class IWorldElementConverter : JsonConverter<IWorldElement>
         writer.WriteEndObject();
     }
 }
+

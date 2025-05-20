@@ -1,4 +1,4 @@
-﻿using FrooxEngine;
+using FrooxEngine;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
@@ -49,3 +49,4 @@ public class Metric<T> where T : IWorldElement
         Ticks += ticks;
     }
 }
+
