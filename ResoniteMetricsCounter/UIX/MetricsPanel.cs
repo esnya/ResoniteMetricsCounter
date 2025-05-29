@@ -126,9 +126,9 @@ internal sealed class MetricsPanel
                 page.Value.Update(metricsCounter, maxItems);
             }
             ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
+            isProfiling = !isProfiling;
             //button.Enabled = false;
             button.LabelText = "Restart Profiler";
-            isProfiling = false;
         };
     }
 
