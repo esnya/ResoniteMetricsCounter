@@ -7,7 +7,7 @@ namespace ResoniteMetricsCounter.Patch;
 
 [HarmonyPatch(typeof(World), "RefreshStep")]
 [HarmonyPatchCategory(Category.PROFILER)]
-internal static class World_RefleshStep_Patch
+internal static class World_RefreshStep_Patch
 {
     public static void Postfix(World __instance)
     {
