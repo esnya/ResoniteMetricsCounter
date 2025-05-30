@@ -11,8 +11,11 @@ namespace ResoniteMetricsCounter.UIX;
 
 internal sealed class MetricsPanel
 {
-    private readonly List<KeyValuePair<string, MetricsPageBase>> pages =
-        new() { new("Detailed", new DetailedPage()), new("Hierarchy", new HierarchyPage()) };
+    private readonly List<KeyValuePair<string, MetricsPageBase>> pages = new()
+    {
+        new("Detailed", new DetailedPage()),
+        new("Hierarchy", new HierarchyPage()),
+    };
 
     public const float DEFAULTITEMSIZE = 32;
     public const float PADDING = 4;

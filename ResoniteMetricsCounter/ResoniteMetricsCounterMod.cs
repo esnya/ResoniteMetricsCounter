@@ -39,45 +39,52 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<string> blackListKey =
-        new(
-            "BlackList",
-            "Ignore those components. Commas separated.",
-            computeDefault: () =>
-                string.Join(
-                    ",",
-                    new[]
-                    {
-                        nameof(InteractionHandler),
-                        nameof(InteractionLaser),
-                        nameof(HandPoser),
-                        nameof(LocomotionController),
-                        nameof(UserPoseController),
-                        nameof(PhotoCaptureManager),
-                        nameof(TipTouchSource),
-                    }
-                )
-        );
+    private static readonly ModConfigurationKey<string> blackListKey = new(
+        "BlackList",
+        "Ignore those components. Commas separated.",
+        computeDefault: () =>
+            string.Join(
+                ",",
+                new[]
+                {
+                    nameof(InteractionHandler),
+                    nameof(InteractionLaser),
+                    nameof(HandPoser),
+                    nameof(LocomotionController),
+                    nameof(UserPoseController),
+                    nameof(PhotoCaptureManager),
+                    nameof(TipTouchSource),
+                }
+            )
+    );
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float2> panelSizeKey =
-        new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
+    private static readonly ModConfigurationKey<float2> panelSizeKey = new(
+        "PanelSize",
+        "Size of the panel.",
+        computeDefault: () => new float2(1200, 1200)
+    );
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<int> maxItemsKey =
-        new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
+    private static readonly ModConfigurationKey<int> maxItemsKey = new(
+        "MaxItems",
+        "Max items to show in the panel.",
+        computeDefault: () => 256
+    );
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<bool> writeToFileKey =
-        new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
+    private static readonly ModConfigurationKey<bool> writeToFileKey = new(
+        "WriteToFile",
+        "Write metrics to file.",
+        computeDefault: () => false
+    );
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey =
-        new(
-            "UIUpdateInterval",
-            "Interval in seconds to update the UI.",
-            computeDefault: () => 0.1f
-        );
+    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey = new(
+        "UIUpdateInterval",
+        "Interval in seconds to update the UI.",
+        computeDefault: () => 0.1f
+    );
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? Panel { get; private set; }

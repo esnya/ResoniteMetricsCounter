@@ -7,28 +7,37 @@
     Prerequisites: Project must be built first (dotnet build)
     Installs to main mods folder, and additionally to HotReload folder for Debug builds
   -->
-  <Target Name="Install"
-          Inputs="$(TargetPath)"
-          Outputs="$(ResoniteModsPath)\$(TargetFileName);$(ResoniteHotReloadPath)\$(TargetFileName)">
-
+  <Target
+    Name="Install"
+    Inputs="$(TargetPath)"
+    Outputs="$(ResoniteModsPath)\$(TargetFileName);$(ResoniteHotReloadPath)\$(TargetFileName)"
+  >
     <!-- Check if build output exists -->
-    <Error Text="Build output not found at $(TargetPath). Please run 'dotnet build' first."
-           Condition="!Exists('$(TargetPath)')" />
-
+    <Error
+      Text="Build output not found at $(TargetPath). Please run 'dotnet build' first."
+      Condition="!Exists('$(TargetPath)')"
+    />
     <!-- Always install to main mods folder -->
-    <Message Text="Installing $(TargetFileName) to Resonite mods folder: $(ResoniteModsPath)" Importance="high" />
+    <Message
+      Text="Installing $(TargetFileName) to Resonite mods folder: $(ResoniteModsPath)"
+      Importance="high"
+    />
     <MakeDir Directories="$(ResoniteModsPath)" Condition="!Exists('$(ResoniteModsPath)')" />
-    <Copy SourceFiles="$(TargetPath)"
-          DestinationFolder="$(ResoniteModsPath)" />
-
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ResoniteModsPath)" />
     <!-- Additionally install to HotReload folder for Debug builds -->
-    <Message Text="Installing $(TargetFileName) to Resonite hot reload folder: $(ResoniteHotReloadPath)"
-             Importance="high"
-             Condition="'$(Configuration)'=='Debug'" />
-    <MakeDir Directories="$(ResoniteHotReloadPath)"
-             Condition="'$(Configuration)'=='Debug' AND !Exists('$(ResoniteHotReloadPath)')" />
-    <Copy SourceFiles="$(TargetPath)"
-          DestinationFolder="$(ResoniteHotReloadPath)"
-          Condition="'$(Configuration)'=='Debug'" />
+    <Message
+      Text="Installing $(TargetFileName) to Resonite hot reload folder: $(ResoniteHotReloadPath)"
+      Importance="high"
+      Condition="'$(Configuration)'=='Debug'"
+    />
+    <MakeDir
+      Directories="$(ResoniteHotReloadPath)"
+      Condition="'$(Configuration)'=='Debug' AND !Exists('$(ResoniteHotReloadPath)')"
+    />
+    <Copy
+      SourceFiles="$(TargetPath)"
+      DestinationFolder="$(ResoniteHotReloadPath)"
+      Condition="'$(Configuration)'=='Debug'"
+    />
   </Target>
 </Project>

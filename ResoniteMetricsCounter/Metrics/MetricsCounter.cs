@@ -149,18 +149,17 @@ internal sealed class MetricsCounter : IDisposable
         }
     }
 
-    private static readonly JsonSerializerOptions jsonSerializerOptions =
-        new()
+    private static readonly JsonSerializerOptions jsonSerializerOptions = new()
+    {
+        WriteIndented = true,
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
+        Converters =
         {
-            WriteIndented = true,
-            IgnoreReadOnlyFields = false,
-            IgnoreReadOnlyProperties = false,
-            Converters =
-            {
-                new IWorldElementConverter(),
-                new JsonStringEnumConverter<World.RefreshStage>(),
-            },
-        };
+            new IWorldElementConverter(),
+            new JsonStringEnumConverter<World.RefreshStage>(),
+        },
+    };
 
     public void WriteToFile()
     {
