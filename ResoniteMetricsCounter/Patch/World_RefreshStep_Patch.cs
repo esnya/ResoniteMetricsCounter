@@ -1,7 +1,7 @@
-﻿using FrooxEngine;
+using System;
+using FrooxEngine;
 using HarmonyLib;
 using ResoniteModLoader;
-using System;
 
 namespace ResoniteMetricsCounter.Patch;
 
@@ -13,7 +13,11 @@ internal static class World_RefreshStep_Patch
     {
         try
         {
-            if (__instance.Focus != World.WorldFocus.Focused || __instance.Stage != World.RefreshStage.Connectors - 1) return;
+            if (
+                __instance.Focus != World.WorldFocus.Focused
+                || __instance.Stage != World.RefreshStage.Connectors - 1
+            )
+                return;
             ResoniteMetricsCounterMod.Panel?.Update();
         }
         catch (Exception e)

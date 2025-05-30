@@ -1,15 +1,15 @@
-﻿using Elements.Core;
-using FrooxEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Elements.Core;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Metrics;
 
-
-public interface IMetricStorage<T> where T : IWorldElement
+public interface IMetricStorage<T>
+    where T : IWorldElement
 {
     /// <summary>
     /// Total ticks of all metrics.
@@ -52,7 +52,8 @@ public interface IMetricStorage<T> where T : IWorldElement
     int RemoveWhere(Func<Metric<T>, bool> predicate);
 }
 
-internal abstract class MetricStorageBase<T> : IMetricStorage<T> where T : IWorldElement
+internal abstract class MetricStorageBase<T> : IMetricStorage<T>
+    where T : IWorldElement
 {
     private readonly Dictionary<RefID, Metric<T>> metrics = new();
 
@@ -60,7 +61,10 @@ internal abstract class MetricStorageBase<T> : IMetricStorage<T> where T : IWorl
 
     public long Max { get; private set; }
 
-    public int Count { get => metrics.Count; }
+    public int Count
+    {
+        get => metrics.Count;
+    }
 
     public IEnumerable<Metric<T>> Metrics => metrics.Values;
 
@@ -71,7 +75,12 @@ internal abstract class MetricStorageBase<T> : IMetricStorage<T> where T : IWorl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void InternalAdd(T target, long ticks, MetricStage stage, Dictionary<RefID, Metric<T>> metricsDict)
+    protected void InternalAdd(
+        T target,
+        long ticks,
+        MetricStage stage,
+        Dictionary<RefID, Metric<T>> metricsDict
+    )
     {
         var refID = target.ReferenceID;
 
@@ -105,17 +114,18 @@ internal abstract class MetricStorageBase<T> : IMetricStorage<T> where T : IWorl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int RemoveWhere(Func<Metric<T>, bool> predicate)
     {
-        var query = from metric in Metrics
-                    where predicate(metric)
-                    select Remove(metric.Target) into n
-                    select n;
+        var query =
+            from metric in Metrics
+            where predicate(metric)
+            select Remove(metric.Target) into n
+            select n;
 
         return query.Sum();
     }
 }
 
-
-internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable where T : IWorldElement
+internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable
+    where T : IWorldElement
 {
     private readonly ThreadLocal<Dictionary<RefID, Metric<T>>> parallelMetrics = new(() => new());
     private bool hasParallelMetric;
@@ -142,9 +152,10 @@ internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable wher
             if (hasParallelMetric)
             {
                 hasParallelMetric = false;
-                var query = from item in parallelMetrics.Values.SelectMany(d => d)
-                            group item.Value by item.Key into values
-                            select values;
+                var query =
+                    from item in parallelMetrics.Values.SelectMany(d => d)
+                    group item.Value by item.Key into values
+                    select values;
 
                 foreach (var values in query)
                 {
@@ -168,7 +179,8 @@ internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable wher
     }
 }
 
-public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorldElement
+public sealed class MetricsByStageStorage<T> : IMetricStorage<T>
+    where T : IWorldElement
 {
     private sealed class MetricsStorageImpl : MetricStorageBase<T>
     {
@@ -183,6 +195,7 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorl
     }
 
     private readonly List<MetricsStorageImpl> storageByStage;
+
     public MetricsByStageStorage()
     {
         var stageCount = Enum.GetValues(typeof(MetricStage)).AsQueryable().Cast<int>().Max() + 1;
@@ -191,9 +204,13 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorl
 
     public long Total { get; private set; }
     public long Max { get; private set; }
-    public int Count { get => storageByStage.Sum(s => s.Count); }
+    public int Count
+    {
+        get => storageByStage.Sum(s => s.Count);
+    }
 
-    public IEnumerable<Metric<T>> Metrics => storageByStage.SelectMany(s => s.Metrics).Where(m => m is not null);
+    public IEnumerable<Metric<T>> Metrics =>
+        storageByStage.SelectMany(s => s.Metrics).Where(m => m is not null);
 
     private void UpdateStats()
     {
@@ -214,9 +231,10 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorl
 
     public int RemoveWhere(Func<Metric<T>, bool> predicate)
     {
-        var query = from storage in storageByStage
-                    select storage.RemoveWhere(predicate) into n
-                    select n;
+        var query =
+            from storage in storageByStage
+            select storage.RemoveWhere(predicate) into n
+            select n;
         var result = query.Sum();
 
         UpdateStats();

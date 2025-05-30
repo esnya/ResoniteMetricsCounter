@@ -110,7 +110,7 @@ dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 # File headers
 file_header_template = unset
 
-# IDE診断
+# IDE diagnostics
 dotnet_diagnostic.IDE0003.severity = warning  # Remove this or Me qualification
 dotnet_diagnostic.IDE0009.severity = warning  # Add this or Me qualification
 dotnet_diagnostic.IDE0011.severity = warning  # Add braces

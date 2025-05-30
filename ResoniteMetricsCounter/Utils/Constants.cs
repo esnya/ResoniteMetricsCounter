@@ -1,4 +1,4 @@
-﻿namespace ResoniteMetricsCounter.Utils;
+namespace ResoniteMetricsCounter.Utils;
 
 internal struct Constants
 {

@@ -1,8 +1,8 @@
-﻿using FrooxEngine;
-using FrooxEngine.UIX;
-using ResoniteMetricsCounter.Metrics;
 using System;
 using System.Collections.Generic;
+using FrooxEngine;
+using FrooxEngine.UIX;
+using ResoniteMetricsCounter.Metrics;
 
 namespace ResoniteMetricsCounter.UIX.Pages;
 
@@ -13,6 +13,7 @@ internal abstract class MetricsPageBase : IDisposable
     public abstract void Update(in MetricsCounter metricsCounter, int maxItems);
 
     protected Slot? container { get; private set; }
+
     public bool IsActive()
     {
         return container?.IsActive ?? false;
@@ -23,10 +24,13 @@ internal abstract class MetricsPageBase : IDisposable
         container = uiBuilder.VerticalLayout(RadiantUI_Constants.GRID_PADDING).Slot;
         container.Disposing += _ => container = null;
 
-        foreach (var _ in MetricColumnDefinition.Build(uiBuilder, Columns, static c => c.Slot.OrderOffset = long.MinValue))
-        {
-
-        }
+        foreach (
+            var _ in MetricColumnDefinition.Build(
+                uiBuilder,
+                Columns,
+                static c => c.Slot.OrderOffset = long.MinValue
+            )
+        ) { }
 
         uiBuilder.NestOut();
     }
