@@ -11,7 +11,7 @@
     <Copyright>Copyright (c) 2025 $(Authors)</Copyright>
     <PackageTags>Resonite,Mod,ResoniteModLoader,Profiler,Metrics</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>0.7.0.0</Version>
+    <Version>0.8.0</Version>
   </PropertyGroup>
 
   <!-- Common Build Properties -->
@@ -88,6 +88,15 @@
     </Reference>
     <Reference Include="Elements.Assets">
       <HintPath>$(ResoniteManagedPath)Elements.Assets.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="System.Text.Json">
+      <HintPath>$(ResoniteManagedPath)System.Text.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>$(ResoniteManagedPath)System.Memory.dll</HintPath>
       <Private>false</Private>
     </Reference>
 
