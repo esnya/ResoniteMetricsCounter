@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Elements.Core;
 using FrooxEngine;
 using HarmonyLib;
@@ -6,14 +11,6 @@ using ResoniteMetricsCounter.Patch;
 using ResoniteMetricsCounter.UIX;
 using ResoniteMetricsCounter.Utils;
 using ResoniteModLoader;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-
-
-
 #if DEBUG
 using ResoniteHotReloadLib;
 #endif
@@ -27,34 +24,60 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private const string MENU_ACTION = "Performance Metrics Counter (Mod)";
 
     public override string Name => ModAssembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
-    public override string Author => ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
-    public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-    public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
+    public override string Author =>
+        ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
+    public override string Version =>
+        ModAssembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            .InformationalVersion;
+    public override string Link =>
+        ModAssembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .First(meta => meta.Key == "RepositoryUrl")
+            .Value;
 
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => string.Join(",", new[] {
-        nameof(InteractionHandler),
-        nameof(InteractionLaser),
-        nameof(HandPoser),
-        nameof(LocomotionController),
-        nameof(UserPoseController),
-        nameof(PhotoCaptureManager),
-        nameof(TipTouchSource),
-     }));
+    private static readonly ModConfigurationKey<string> blackListKey =
+        new(
+            "BlackList",
+            "Ignore those components. Commas separated.",
+            computeDefault: () =>
+                string.Join(
+                    ",",
+                    new[]
+                    {
+                        nameof(InteractionHandler),
+                        nameof(InteractionLaser),
+                        nameof(HandPoser),
+                        nameof(LocomotionController),
+                        nameof(UserPoseController),
+                        nameof(PhotoCaptureManager),
+                        nameof(TipTouchSource),
+                    }
+                )
+        );
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float2> panelSizeKey = new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
+    private static readonly ModConfigurationKey<float2> panelSizeKey =
+        new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<int> maxItemsKey = new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
+    private static readonly ModConfigurationKey<int> maxItemsKey =
+        new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
+    private static readonly ModConfigurationKey<bool> writeToFileKey =
+        new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey = new("UIUpdateInterval", "Interval in seconds to update the UI.", computeDefault: () => 0.1f);
+    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey =
+        new(
+            "UIUpdateInterval",
+            "Interval in seconds to update the UI.",
+            computeDefault: () => 0.1f
+        );
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? Panel { get; private set; }
@@ -62,7 +85,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     public static float uiUpdateInterval { get; private set; }
 
     private static string menuActionLabel = MENU_ACTION;
-    private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys = new();
+    private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys =
+        new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
     public static bool isRunning { get; private set; }
     private static Slot? lastUsedSlot;
@@ -83,7 +107,11 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         foreach (var stage in MetricStageUtils.Collectables)
         {
             var defaultValue = MetricStageUtils.Defaults.Contains(stage);
-            var key = new ModConfigurationKey<bool>($"Collect {stage}", $"Collect metrics for {stage}.", computeDefault: () => defaultValue);
+            var key = new ModConfigurationKey<bool>(
+                $"Collect {stage}",
+                $"Collect metrics for {stage}.",
+                computeDefault: () => defaultValue
+            );
             key.OnChanged += value => collectStage[stage] = (bool)value!;
             builder.Key(key);
             stageConfigKeys[stage] = key;
@@ -116,7 +144,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
 
 #if DEBUG
-        menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+        menuActionLabel =
+            $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
 #endif
 
         DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
@@ -127,7 +156,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         try
         {
-            SetRunning(false);//check this line, I might have gotten this true/false value wrong.
+            SetRunning(false); //check this line, I might have gotten this true/false value wrong.
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
@@ -145,7 +174,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     public static IEnumerable<string> ParseCommaSeparatedString(string? str)
     {
-        return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0) ?? Enumerable.Empty<string>();
+        return str?.Split(',')?.Select(item => item.Trim()).Where(item => item.Length > 0)
+            ?? Enumerable.Empty<string>();
     }
 
     public static void InitPanel(Slot slot)
@@ -191,7 +221,12 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
 
-        Panel = new MetricsPanel(slot, Writer, config?.GetValue(panelSizeKey) ?? new float2(1200, 1200), config?.GetValue(maxItemsKey) ?? 256);
+        Panel = new MetricsPanel(
+            slot,
+            Writer,
+            config?.GetValue(panelSizeKey) ?? new float2(1200, 1200),
+            config?.GetValue(maxItemsKey) ?? 256
+        );
 
         foreach (var key in stageConfigKeys)
         {
@@ -234,8 +269,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Writer?.Dispose();
         WorldElementHelper.Clear();
 
-
-
         Msg("Profiler stopped");
     }
 
@@ -243,7 +276,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         if (shouldRun == isRunning)
         {
-            return;//nothing to do
+            return; //nothing to do
         }
 
         if (shouldRun)
@@ -254,6 +287,5 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         {
             Stop();
         }
-
     }
 }

@@ -1,20 +1,18 @@
-﻿using Elements.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Pages;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace ResoniteMetricsCounter.UIX;
+
 internal sealed class MetricsPanel
 {
-    private readonly List<KeyValuePair<string, MetricsPageBase>> pages = new()
-    {
-        new("Detailed", new DetailedPage()),
-        new("Hierarchy", new HierarchyPage()),
-    };
+    private readonly List<KeyValuePair<string, MetricsPageBase>> pages =
+        new() { new("Detailed", new DetailedPage()), new("Hierarchy", new HierarchyPage()) };
 
     public const float DEFAULTITEMSIZE = 32;
     public const float PADDING = 4;
@@ -90,7 +88,12 @@ internal sealed class MetricsPanel
         foreach (var keyValuePair in pages)
         {
             uiBuilder.NestInto(pagesContainer);
-            BuildPageUI(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
+            BuildPageUI(
+                uiBuilder,
+                keyValuePair.Value,
+                keyValuePair.Key,
+                keyValuePair.Key == activePage
+            );
         }
     }
 
@@ -103,7 +106,6 @@ internal sealed class MetricsPanel
             {
                 ResoniteMetricsCounterMod.SetRunning(false);
             }
-
         };
 
         slot.Tag = "Developer";
@@ -140,72 +142,108 @@ internal sealed class MetricsPanel
         const float spacing = 0.25f;
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Frames:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0");
-            framesField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00FPS");
-            fpsField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Frames:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0");
+                framesField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00FPS");
+                fpsField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Elapsed:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            elapsedTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            frameIntervalField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Elapsed:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                elapsedTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                frameIntervalField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Sum:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            totalTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            avgTotalTimeField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Sum:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                totalTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                avgTotalTimeField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Max:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            maxTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            avgMaxTimeField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Max:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                maxTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                avgMaxTimeField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Count:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0");
-            countField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Count:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0");
+                countField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.Spacer(0.5f);
         uiBuilder.NestOut();
 
@@ -246,7 +284,12 @@ internal sealed class MetricsPanel
         };
     }
 
-    private static void BuildPageUI(UIBuilder uiBuilder, in MetricsPageBase page, in string label, bool active)
+    private static void BuildPageUI(
+        UIBuilder uiBuilder,
+        in MetricsPageBase page,
+        in string label,
+        bool active
+    )
     {
         var slot = uiBuilder.Next(label);
         slot.ActiveSelf = active;
@@ -279,7 +322,6 @@ internal sealed class MetricsPanel
         }
 
         nextUpdateTime = worldTime + ResoniteMetricsCounterMod.uiUpdateInterval;
-
 
         var frames = metricsCounter.FrameCount;
 
@@ -317,7 +359,6 @@ internal sealed class MetricsPanel
             avgTotalTimeField.Value = $"{totalTime / frames:0.000}ms";
         }
 
-
         var maxTime = 1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency;
 
         if (avgMaxTimeField is not null && !avgMaxTimeField.IsDisposed)
@@ -329,7 +370,6 @@ internal sealed class MetricsPanel
         {
             maxTimeField.Value = $"{maxTime:0.00}ms";
         }
-
 
         if (countField is not null && !countField.IsDisposed)
         {
@@ -344,6 +384,7 @@ internal sealed class MetricsPanel
             }
         }
     }
+
     public void Dispose()
     {
         slot?.Dispose();

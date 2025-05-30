@@ -1,16 +1,14 @@
-﻿using Elements.Core;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Utils;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.UIX.Item;
 
-
 internal abstract class MetricPageItemBase<T>
 {
-
     private readonly Slot slot;
     private readonly Sync<colorX> metricTint;
     private readonly ReferenceProxySource referenceProxySource;
@@ -42,12 +40,18 @@ internal abstract class MetricPageItemBase<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract long GetTicks(in T metric);
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected abstract IWorldElement? GetReference(in T metric);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected abstract void UpdateColumn(in T metric, Sync<string> column, int i, long maxTicks, long elapsedTicks, long frameCount);
+    protected abstract void UpdateColumn(
+        in T metric,
+        Sync<string> column,
+        int i,
+        long maxTicks,
+        long elapsedTicks,
+        long frameCount
+    );
 
     public bool Update(in T metric, long maxTicks, long elapsedTicks, long frameCount)
     {
@@ -65,7 +69,11 @@ internal abstract class MetricPageItemBase<T>
             UpdateColumn(metric, LabelFields[i], i, maxTicks, elapsedTicks, frameCount);
         }
 
-        metricTint.Value = MathX.Lerp(RadiantUI_Constants.DarkLight.GREEN, RadiantUI_Constants.DarkLight.RED, MathX.Sqrt(maxRatio));
+        metricTint.Value = MathX.Lerp(
+            RadiantUI_Constants.DarkLight.GREEN,
+            RadiantUI_Constants.DarkLight.RED,
+            MathX.Sqrt(maxRatio)
+        );
         metricRect.AnchorMax.Value = new float2(maxRatio, 1.0f);
 
         var reference = GetReference(metric);

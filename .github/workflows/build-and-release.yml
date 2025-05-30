@@ -15,8 +15,8 @@ on:
     - ci/*
 
 env:
-  artifact: EsnyaResoniteModTemplate.dll
-  project_path: EsnyaResoniteModTemplate
+  artifact: ResoniteMetricsCounter.dll
+  project_path: ResoniteMetricsCounter
 
 permissions:
   contents: read

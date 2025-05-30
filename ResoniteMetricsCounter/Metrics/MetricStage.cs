@@ -1,5 +1,5 @@
-﻿using FrooxEngine;
 using System.Collections.Generic;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Metrics;
 
@@ -32,37 +32,37 @@ public enum MetricStage
     DynamicBoneChainFinish,
 }
 
-
 public static class MetricStageUtils
 {
+    public static readonly HashSet<MetricStage> Collectables =
+        new()
+        {
+            MetricStage.PhysicsMoved,
+            MetricStage.Updates,
+            MetricStage.ProtoFluxRebuild,
+            MetricStage.ProtoFluxEvents,
+            MetricStage.ProtoFluxUpdates,
+            MetricStage.ProtoFluxContinuousChanges,
+            MetricStage.ProtoFluxDiscreteChangesPre,
+            MetricStage.Changes,
+            MetricStage.ProtoFluxDiscreteChangesPost,
+            MetricStage.ParticleSystems,
+            MetricStage.Connectors,
+            MetricStage.DynamicBoneChainPrepare,
+            MetricStage.DynamicBoneChainOverlaps,
+            MetricStage.DynamicBoneChainSimulation,
+            MetricStage.DynamicBoneChainFinish,
+        };
 
-    public static readonly HashSet<MetricStage> Collectables = new()
-    {
-        MetricStage.PhysicsMoved,
-        MetricStage.Updates,
-        MetricStage.ProtoFluxRebuild,
-        MetricStage.ProtoFluxEvents,
-        MetricStage.ProtoFluxUpdates,
-        MetricStage.ProtoFluxContinuousChanges,
-        MetricStage.ProtoFluxDiscreteChangesPre,
-        MetricStage.Changes,
-        MetricStage.ProtoFluxDiscreteChangesPost,
-        MetricStage.ParticleSystems,
-        MetricStage.Connectors,
-        MetricStage.DynamicBoneChainPrepare,
-        MetricStage.DynamicBoneChainOverlaps,
-        MetricStage.DynamicBoneChainSimulation,
-        MetricStage.DynamicBoneChainFinish,
-    };
-
-    public static readonly HashSet<MetricStage> Defaults = new()
-    {
-        MetricStage.PhysicsMoved,
-        MetricStage.Updates,
-        MetricStage.ProtoFluxUpdates,
-        MetricStage.ProtoFluxContinuousChanges,
-        MetricStage.Changes,
-        MetricStage.DynamicBoneChainSimulation,
-        MetricStage.DynamicBoneChainFinish,
-    };
+    public static readonly HashSet<MetricStage> Defaults =
+        new()
+        {
+            MetricStage.PhysicsMoved,
+            MetricStage.Updates,
+            MetricStage.ProtoFluxUpdates,
+            MetricStage.ProtoFluxContinuousChanges,
+            MetricStage.Changes,
+            MetricStage.DynamicBoneChainSimulation,
+            MetricStage.DynamicBoneChainFinish,
+        };
 }
