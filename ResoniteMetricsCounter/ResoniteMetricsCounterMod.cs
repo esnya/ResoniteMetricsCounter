@@ -163,7 +163,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     {
         try
         {
-            SetRunning(false); //check this line, I might have gotten this true/false value wrong.
+            SetRunning(false);
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
