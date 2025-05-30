@@ -19,7 +19,6 @@ internal sealed class MetricsPanel
 
     public const float DEFAULTITEMSIZE = 32;
     public const float PADDING = 4;
-    public const float DEFAULTSEPARATION = 0.1f;
 
     private readonly MetricsCounter metricsCounter;
     private readonly Slot slot;
