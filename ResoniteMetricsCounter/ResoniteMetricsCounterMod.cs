@@ -82,13 +82,13 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? Panel { get; private set; }
     internal static MetricsCounter? Writer { get; private set; }
-    public static float uiUpdateInterval { get; private set; }
+    public static float UiUpdateInterval { get; private set; }
 
     private static string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys =
         new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
-    public static bool isRunning { get; private set; }
+    public static bool IsRunning { get; private set; }
     private static Slot? lastUsedSlot;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -139,8 +139,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
                 collectStage[p.Key] = config.GetValue(p.Value);
             }
 
-            uiUpdateInterval = config.GetValue(uiUpdateIntervalKey);
-            uiUpdateIntervalKey.OnChanged += value => uiUpdateInterval = (float)value!;
+            UiUpdateInterval = config.GetValue(uiUpdateIntervalKey);
+            uiUpdateIntervalKey.OnChanged += value => UiUpdateInterval = (float)value!;
         }
 
 #if DEBUG
@@ -189,7 +189,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             Panel.DisableStopButton();
         }
 
-        if (lastUsedSlot is not null && isRunning)
+        if (lastUsedSlot is not null && IsRunning)
         {
             SetRunning(false);
         }
@@ -220,7 +220,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
             lastUsedSlot = slot;
         }
-        isRunning = true;
+        IsRunning = true;
         Msg("Starting Profiler");
         var blackList = ParseCommaSeparatedString(config?.GetValue(blackListKey));
         Writer = new MetricsCounter(blackList);
@@ -248,7 +248,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     private static void Stop()
     {
-        isRunning = false;
+        IsRunning = false;
         Msg("Stopping Profiler");
         foreach (var key in stageConfigKeys)
         {
@@ -281,7 +281,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     public static void SetRunning(bool shouldRun)
     {
-        if (shouldRun == isRunning)
+        if (shouldRun == IsRunning)
         {
             return; //nothing to do
         }

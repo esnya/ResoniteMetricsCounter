@@ -61,7 +61,7 @@ internal sealed class HierarchyPage : MetricsPageBase
 
     public override void Update(in MetricsCounter metricsCounter, int maxItems)
     {
-        if (container is null || container.IsDisposed)
+        if (Container is null || Container.IsDisposed)
         {
             return;
         }
@@ -82,7 +82,7 @@ internal sealed class HierarchyPage : MetricsPageBase
                 .Take(maxItems)
         )
         {
-            var item = items[i] ??= new Item(container, Columns);
+            var item = items[i] ??= new Item(Container, Columns);
             if (i == 0)
             {
                 maxTicks = metric.Ticks;

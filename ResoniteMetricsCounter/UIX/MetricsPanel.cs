@@ -127,7 +127,7 @@ internal sealed class MetricsPanel
             {
                 page.Value.Update(metricsCounter, maxItems);
             }
-            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
+            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.IsRunning);
             isProfiling = !isProfiling;
             //button.Enabled = false;
             button.LabelText = "Restart Profiler";
@@ -321,7 +321,7 @@ internal sealed class MetricsPanel
             return;
         }
 
-        nextUpdateTime = worldTime + ResoniteMetricsCounterMod.uiUpdateInterval;
+        nextUpdateTime = worldTime + ResoniteMetricsCounterMod.UiUpdateInterval;
 
         var frames = metricsCounter.FrameCount;
 
