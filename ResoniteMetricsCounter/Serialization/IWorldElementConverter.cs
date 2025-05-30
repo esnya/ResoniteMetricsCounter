@@ -20,7 +20,7 @@ internal sealed class IWorldElementConverter : JsonConverter<IWorldElement>
         JsonSerializerOptions options
     )
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Deserialization is not supported.");
     }
 
     private static void WriteElement(Utf8JsonWriter writer, IWorldElement value)
