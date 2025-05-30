@@ -337,7 +337,7 @@ internal sealed class MetricsPanel
 
         if (fpsField is not null && !fpsField.IsDisposed)
         {
-            fpsField.Value = $"{1000 * frames / elapsedTime:0.0}FPS";
+            fpsField.Value = $"{1000.0 * frames / elapsedTime:0.0}FPS";
         }
 
         if (elapsedTimeField is not null && !elapsedTimeField.IsDisposed)
@@ -347,7 +347,7 @@ internal sealed class MetricsPanel
 
         if (frameIntervalField is not null && !frameIntervalField.IsDisposed)
         {
-            frameIntervalField.Value = $"{elapsedTime / frames}ms";
+            frameIntervalField.Value = $"{elapsedTime / (double)frames}ms";
         }
 
         var totalTime = 1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency;
