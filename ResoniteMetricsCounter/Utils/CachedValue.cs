@@ -46,29 +46,6 @@ internal abstract class FactoryCachedValueBase<T, K, V> : CachedValueBase<T, K, 
     }
 }
 
-//internal sealed class SimpleCachedValue<K, V> : FactoryCachedValueBase<K, K, V>
-//{
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    protected override K GetKey(in K source) => source;
-
-//    public SimpleCachedValue(Func<K, V> valueFactory) : base(valueFactory)
-//    {
-//    }
-//}
-
-//internal sealed class CachedValue<T, K, V> : FactoryCachedValueBase<T, K, V>
-//{
-//    private readonly Func<T, K> keySelector;
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    protected override K GetKey(in T source) => keySelector(source);
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-
-//    public CachedValue(Func<T, K> keySelector, Func<T, V> valueFactory) : base(valueFactory)
-//    {
-//        this.keySelector = keySelector;
-//    }
-//}
-
 internal sealed class CachedElementValue<T, U> : FactoryCachedValueBase<T, RefID, U>
     where T : IWorldElement
 {
