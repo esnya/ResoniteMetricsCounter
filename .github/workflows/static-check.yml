@@ -1,0 +1,29 @@
+name: Static Checks
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - ci
+      - ci/*
+  pull_request:
+    branches:
+      - master
+      - main
+      - ci
+      - ci/*
+
+jobs:
+  csharpier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install csharpier
+        run: dotnet tool install --tool-path "$HOME/.dotnet/tools" csharpier
+      - name: Run csharpier check
+        run: $HOME/.dotnet/tools/csharpier check .
