@@ -1,6 +1,6 @@
 namespace ResoniteMetricsCounter.Utils;
 
-internal struct Constants
+internal static class Constants
 {
     public const float ROWHEIGHT = 32;
     public const float HEIGHT = 24;
