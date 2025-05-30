@@ -91,7 +91,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     internal static MetricsCounter? Writer { get; private set; }
     public static float UiUpdateInterval { get; private set; }
 
-    private static readonly string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys =
         new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
@@ -151,11 +150,11 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
 
 #if DEBUG
-        menuActionLabel =
-            $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
-#endif
-
+        var menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
         DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
+#else
+        DevCreateNewForm.AddAction("/Editor", MENU_ACTION, InitPanel);
+#endif
     }
 #if DEBUG
 
