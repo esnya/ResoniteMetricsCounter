@@ -17,7 +17,10 @@ internal static class WorldElementHelper
         protected override Slot? GetValue(in IWorldElement source)
         {
             if (source is Slot slot)
+            {
                 return slot;
+            }
+
             return source.Parent as Slot;
         }
     }
@@ -31,7 +34,9 @@ internal static class WorldElementHelper
             var localUserSlot = slot?.ActiveUserRoot?.Slot;
 
             if (slot == localUserSlot)
+            {
                 return slot;
+            }
 
             return slot?.GetObjectRoot(true) ?? slot?.World.RootSlot;
         }

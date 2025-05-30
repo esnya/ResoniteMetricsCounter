@@ -392,6 +392,11 @@ internal sealed class MetricsPanel
 
     public void DisableStopButton()
     {
+        if (stopButton is null || stopButton.IsDisposed)
+        {
+            return;
+        }
+
         stopButton.Enabled = false;
     }
 }

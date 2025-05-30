@@ -160,8 +160,12 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             harmony.UnpatchCategory(Category.CORE);
             HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
+            // Log the error to the console
+            Error("Failed to unpatch Resonite Profiler before hot reload.");
             Error(e);
         }
     }
@@ -185,7 +189,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
             Panel.DisableStopButton();
         }
 
-        if (lastUsedSlot is not null && isRunning is true)
+        if (lastUsedSlot is not null && isRunning)
         {
             SetRunning(false);
         }
@@ -193,7 +197,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Start(slot);
     }
 
-    private static void Start(Slot slot = null)
+    private static void Start(Slot? slot = null)
     {
         if (slot == null)
         {
@@ -253,8 +257,11 @@ public class ResoniteMetricsCounterMod : ResoniteMod
                 Msg($"Unpatching {key.Key}");
                 harmony.UnpatchCategory(key.Key.ToString());
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
             {
+                Error($"Failed to unpatch {key.Key}");
                 Debug(e);
             }
         }
