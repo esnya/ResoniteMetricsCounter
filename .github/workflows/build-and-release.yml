@@ -1,0 +1,123 @@
+name: Build and Release Resonite Mod
+
+on:
+  push:
+    branches:
+    - master
+    - main
+    - ci
+    - ci/*
+  pull_request:
+    branches:
+    - master
+    - main
+    - ci
+    - ci/*
+
+env:
+  artifact: EsnyaResoniteModTemplate.dll
+  project_path: EsnyaResoniteModTemplate
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+    - id: checkout
+      name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET 9.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup RML environment
+      uses: esnya/setup-rml-env@v2
+      with:
+        steam-login: ${{ secrets.STEAMLOGIN }}
+
+    - name: Build RML mod
+      shell: pwsh
+      run: |
+        dotnet restore
+        dotnet build ${{ env.project_path }} --configuration Release --output ${{ github.workspace }}/${{ env.project_path }}/bin/Release/net472
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.artifact }}
+        path: ${{ env.project_path }}/bin/Release/net472/${{ env.artifact }}
+
+  prepare-release:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci' || startsWith(github.ref, 'refs/heads/ci/'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get version from Directory.Build.props
+      id: get_version
+      run: |
+        VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" Directory.Build.props)
+        echo "Version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Debug version info
+      run: |
+        echo "Found version: ${{ steps.get_version.outputs.Version }}"
+
+    - name: Pull tags
+      run: git fetch --tags
+
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        echo "TagExists=$(git tag -l "v${{ steps.get_version.outputs.Version }}")" >> $GITHUB_OUTPUT
+    outputs:
+      should_release: ${{ steps.check_tag.outputs.TagExists == '' }}
+      version: ${{ steps.get_version.outputs.Version }}
+
+  release:
+    if: needs.prepare-release.outputs.should_release == 'true'
+    needs: [build, prepare-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Create tag
+      run: |
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git tag "v${{ needs.prepare-release.outputs.version }}"
+        git push origin "v${{ needs.prepare-release.outputs.version }}"
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.artifact }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ env.artifact }}
+        generate_release_notes: true
+        tag_name: v${{ needs.prepare-release.outputs.version }}
