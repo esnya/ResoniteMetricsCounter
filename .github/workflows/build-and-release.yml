@@ -50,7 +50,7 @@ jobs:
       shell: pwsh
       run: |
         dotnet restore
-        dotnet build ${{ env.project_path }} --configuration Release --output ${{ github.workspace }}/${{ env.project_path }}/bin/Release/net472
+        dotnet build ${{ env.project_path }}/ResoniteMetricsCounter.csproj --configuration Release --output ${{ github.workspace }}/${{ env.project_path }}/bin/Release/net472
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -85,7 +85,8 @@ jobs:
     - name: Check if tag exists
       id: check_tag
       run: |
-        echo "TagExists=$(git tag -l "v${{ steps.get_version.outputs.Version }}")" >> $GITHUB_OUTPUT
+        TAG=$(git tag -l "v${{ steps.get_version.outputs.Version }}")
+        echo "TagExists=$TAG" >> "$GITHUB_OUTPUT"
     outputs:
       should_release: ${{ steps.check_tag.outputs.TagExists == '' }}
       version: ${{ steps.get_version.outputs.Version }}
