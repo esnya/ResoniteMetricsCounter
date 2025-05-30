@@ -91,7 +91,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
     internal static MetricsCounter? Writer { get; private set; }
     public static float UiUpdateInterval { get; private set; }
 
-    private static string menuActionLabel = MENU_ACTION;
+    private static readonly string menuActionLabel = MENU_ACTION;
     private static readonly Dictionary<MetricStage, ModConfigurationKey<bool>> stageConfigKeys =
         new();
     private static readonly Dictionary<MetricStage, bool> collectStage = new();
