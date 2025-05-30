@@ -130,10 +130,12 @@ internal sealed class MetricsPanel
             {
                 page.Value.Update(metricsCounter, maxItems);
             }
-            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.IsRunning);
-            isProfiling = !isProfiling;
-            //button.Enabled = false;
-            button.LabelText = "Restart Profiler";
+
+            var shouldRun = !isProfiling;
+            ResoniteMetricsCounterMod.SetRunning(shouldRun);
+            isProfiling = shouldRun;
+
+            button.LabelText = isProfiling ? "Stop Profiling" : "Restart Profiler";
         };
     }
 
