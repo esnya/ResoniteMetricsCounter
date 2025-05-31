@@ -133,6 +133,10 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 #endif
     }
 
+#if DEBUG
+    private static string menuActionLabel = MENU_ACTION;
+#endif
+
     private static void Init(ResoniteMod modInstance)
     {
         harmony.PatchCategory(Category.CORE);
@@ -150,8 +154,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
 
 #if DEBUG
-        var menuActionLabel =
-            $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+        menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
         DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
 #else
         DevCreateNewForm.AddAction("/Editor", MENU_ACTION, InitPanel);

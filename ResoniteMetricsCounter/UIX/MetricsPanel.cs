@@ -343,19 +343,19 @@ internal sealed class MetricsPanel
 
         if (elapsedTimeField is not null && !elapsedTimeField.IsDisposed)
         {
-            elapsedTimeField.Value = $"{elapsedTime}ms";
+            elapsedTimeField.Value = $"{elapsedTime:0.0}ms";
         }
 
         if (frameIntervalField is not null && !frameIntervalField.IsDisposed)
         {
-            frameIntervalField.Value = $"{elapsedTime / (double)frames}ms";
+            frameIntervalField.Value = $"{elapsedTime / (double)frames:0.0}ms";
         }
 
         var totalTime = 1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency;
 
         if (totalTimeField is not null && !totalTimeField.IsDisposed)
         {
-            totalTimeField.Value = $"{totalTime:0.00}ms";
+            totalTimeField.Value = $"{totalTime:0.0}ms";
         }
 
         if (avgTotalTimeField is not null && !avgTotalTimeField.IsDisposed)
