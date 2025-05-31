@@ -1,11 +1,11 @@
-﻿using FrooxEngine;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using FrooxEngine;
 using FrooxEngine.ProtoFlux;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Item;
 using ResoniteMetricsCounter.Utils;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 namespace ResoniteMetricsCounter.UIX.Pages;
 
@@ -13,9 +13,8 @@ internal sealed class DetailedPage : MetricsPageBase
 {
     private sealed class Item : MetricPageItemBase<Metric<IWorldElement>>
     {
-        public Item(Slot container, List<MetricColumnDefinition> columns) : base(container, columns)
-        {
-        }
+        public Item(Slot container, List<MetricColumnDefinition> columns)
+            : base(container, columns) { }
 
         protected override IWorldElement? GetReference(in Metric<IWorldElement> metric)
         {
@@ -27,13 +26,15 @@ internal sealed class DetailedPage : MetricsPageBase
         {
             return metric.Ticks;
         }
+
         protected override void UpdateColumn(
             in Metric<IWorldElement> metric,
             Sync<string> column,
             int i,
             long maxTicks,
             long totalTicks,
-            long frameCount)
+            long frameCount
+        )
         {
             switch (i)
             {
@@ -47,13 +48,16 @@ internal sealed class DetailedPage : MetricsPageBase
                     column.Value = GetReference(metric)?.Name!;
                     break;
                 case 3:
-                    column.Value = metric.Target is ProtoFluxNode node ? node.Group.Name : metric.Target.Name;
+                    column.Value = metric.Target is ProtoFluxNode node
+                        ? node.Group.Name
+                        : metric.Target.Name;
                     break;
                 case 4:
                     column.Value = $"{metric.Stage}";
                     break;
                 case 5:
-                    column.Value = $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.000}ms";
+                    column.Value =
+                        $"{1000.0 * metric.Ticks / Stopwatch.Frequency / frameCount:0.000}ms";
                     break;
                 case 6:
                     column.Value = $"{(double)metric.Ticks / totalTicks:0.000%}";
@@ -62,7 +66,9 @@ internal sealed class DetailedPage : MetricsPageBase
         }
     }
 
-    protected override List<MetricColumnDefinition> Columns => new() {
+    protected override List<MetricColumnDefinition> Columns =>
+        new()
+        {
             new("Object Root", flexWidth: Constants.FLEX),
             new("Parent", flexWidth: Constants.FLEX),
             new("Slot", flexWidth: Constants.FLEX),
@@ -70,12 +76,13 @@ internal sealed class DetailedPage : MetricsPageBase
             new("Stage", flexWidth: Constants.FLEX),
             new("Time", minWidth: Constants.FIXEDWIDTH),
             new("%", minWidth: Constants.FIXEDWIDTH),
-    };
+        };
 
     private List<Item?>? items;
+
     public override void Update(in MetricsCounter metricsCounter, int maxItems)
     {
-        if (container is null || container.IsDisposed)
+        if (Container is null || Container.IsDisposed)
         {
             return;
         }
@@ -97,9 +104,13 @@ internal sealed class DetailedPage : MetricsPageBase
         }
 
         var i = 0;
-        foreach (var metric in metricsCounter.ByElement.Metrics.OrderByDescending(m => m.Ticks).Take(maxItems))
+        foreach (
+            var metric in metricsCounter
+                .ByElement.Metrics.OrderByDescending(m => m.Ticks)
+                .Take(maxItems)
+        )
         {
-            var item = items[i] ?? (items[i] = new Item(container, Columns));
+            var item = items[i] ?? (items[i] = new Item(Container, Columns));
 
             if (!item.Update(metric, maxTicks, totalTicks, frameCount))
             {

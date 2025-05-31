@@ -1,6 +1,6 @@
-﻿using FrooxEngine;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Metrics;
 
@@ -8,22 +8,26 @@ namespace ResoniteMetricsCounter.Metrics;
 /// Represents a metric that is associated with a specific target element.
 /// </summary>
 /// <typeparam name="T">The type of the target element, which must implement <see cref="IWorldElement"/>.</typeparam>
-public class Metric<T> where T : IWorldElement
+public class Metric<T>
+    where T : IWorldElement
 {
     /// <summary>
     /// Target element of the metric.
     /// </summary>
-    [JsonInclude] public T Target { get; private set; }
+    [JsonInclude]
+    public T Target { get; private set; }
 
     /// <summary>
     /// Stage of the metric.
-    /// </summary>  
-    [JsonInclude] public MetricStage Stage { get; private set; }
+    /// </summary>
+    [JsonInclude]
+    public MetricStage Stage { get; private set; }
 
     /// <summary>
     /// Ticks of the metric.
     /// </summary>
-    [JsonInclude] public long Ticks { get; private set; }
+    [JsonInclude]
+    public long Ticks { get; private set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Metric{T}"/> class.

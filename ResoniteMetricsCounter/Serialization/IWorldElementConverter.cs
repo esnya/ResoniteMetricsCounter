@@ -1,9 +1,9 @@
-﻿using Elements.Core;
-using FrooxEngine;
-using ResoniteMetricsCounter.Utils;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Elements.Core;
+using FrooxEngine;
+using ResoniteMetricsCounter.Utils;
 
 namespace ResoniteMetricsCounter.Serialization;
 
@@ -14,10 +14,15 @@ internal sealed class IWorldElementConverter : JsonConverter<IWorldElement>
         return typeof(IWorldElement).IsAssignableFrom(typeToConvert);
     }
 
-    public override IWorldElement? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override IWorldElement? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options
+    )
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Deserialization is not supported.");
     }
+
     private static void WriteElement(Utf8JsonWriter writer, IWorldElement value)
     {
         writer.WriteString("ID", value.ReferenceID.ToString());
@@ -41,7 +46,11 @@ internal sealed class IWorldElementConverter : JsonConverter<IWorldElement>
         writer.WriteEndObject();
     }
 
-    public override void Write(Utf8JsonWriter writer, IWorldElement value, JsonSerializerOptions options)
+    public override void Write(
+        Utf8JsonWriter writer,
+        IWorldElement value,
+        JsonSerializerOptions options
+    )
     {
         writer.WriteStartObject();
 

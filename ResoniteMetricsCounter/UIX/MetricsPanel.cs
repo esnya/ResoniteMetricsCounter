@@ -1,13 +1,14 @@
-﻿using Elements.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Metrics;
 using ResoniteMetricsCounter.UIX.Pages;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace ResoniteMetricsCounter.UIX;
+
 internal sealed class MetricsPanel
 {
     private readonly List<KeyValuePair<string, MetricsPageBase>> pages = new()
@@ -18,7 +19,6 @@ internal sealed class MetricsPanel
 
     public const float DEFAULTITEMSIZE = 32;
     public const float PADDING = 4;
-    public const float DEFAULTSEPARATION = 0.1f;
 
     private readonly MetricsCounter metricsCounter;
     private readonly Slot slot;
@@ -90,7 +90,12 @@ internal sealed class MetricsPanel
         foreach (var keyValuePair in pages)
         {
             uiBuilder.NestInto(pagesContainer);
-            BuildPageUI(uiBuilder, keyValuePair.Value, keyValuePair.Key, keyValuePair.Key == activePage);
+            BuildPageUI(
+                uiBuilder,
+                keyValuePair.Value,
+                keyValuePair.Key,
+                keyValuePair.Key == activePage
+            );
         }
     }
 
@@ -103,7 +108,6 @@ internal sealed class MetricsPanel
             {
                 ResoniteMetricsCounterMod.SetRunning(false);
             }
-
         };
 
         slot.Tag = "Developer";
@@ -125,10 +129,12 @@ internal sealed class MetricsPanel
             {
                 page.Value.Update(metricsCounter, maxItems);
             }
-            ResoniteMetricsCounterMod.SetRunning(!ResoniteMetricsCounterMod.isRunning);
-            isProfiling = !isProfiling;
-            //button.Enabled = false;
-            button.LabelText = "Restart Profiler";
+
+            var shouldRun = !isProfiling;
+            ResoniteMetricsCounterMod.SetRunning(shouldRun);
+            isProfiling = shouldRun;
+
+            button.LabelText = isProfiling ? "Stop Profiling" : "Restart Profiler";
         };
     }
 
@@ -140,72 +146,108 @@ internal sealed class MetricsPanel
         const float spacing = 0.25f;
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Frames:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0");
-            framesField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00FPS");
-            fpsField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Frames:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0");
+                framesField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00FPS");
+                fpsField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Elapsed:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            elapsedTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            frameIntervalField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Elapsed:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                elapsedTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                frameIntervalField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Sum:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            totalTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            avgTotalTimeField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Sum:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                totalTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                avgTotalTimeField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Max:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            maxTimeField = text.Content;
-            return text;
-        });
-        uiBuilder.HorizontalElementWithLabel("Avg:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0.00ms");
-            avgMaxTimeField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Max:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                maxTimeField = text.Content;
+                return text;
+            }
+        );
+        uiBuilder.HorizontalElementWithLabel(
+            "Avg:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0.00ms");
+                avgMaxTimeField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.NestOut();
 
         uiBuilder.HorizontalLayout();
-        uiBuilder.HorizontalElementWithLabel("Count:", spacing, () =>
-        {
-            var text = uiBuilder.Text("0");
-            countField = text.Content;
-            return text;
-        });
+        uiBuilder.HorizontalElementWithLabel(
+            "Count:",
+            spacing,
+            () =>
+            {
+                var text = uiBuilder.Text("0");
+                countField = text.Content;
+                return text;
+            }
+        );
         uiBuilder.Spacer(0.5f);
         uiBuilder.NestOut();
 
@@ -246,7 +288,12 @@ internal sealed class MetricsPanel
         };
     }
 
-    private static void BuildPageUI(UIBuilder uiBuilder, in MetricsPageBase page, in string label, bool active)
+    private static void BuildPageUI(
+        UIBuilder uiBuilder,
+        in MetricsPageBase page,
+        in string label,
+        bool active
+    )
     {
         var slot = uiBuilder.Next(label);
         slot.ActiveSelf = active;
@@ -278,8 +325,7 @@ internal sealed class MetricsPanel
             return;
         }
 
-        nextUpdateTime = worldTime + ResoniteMetricsCounterMod.uiUpdateInterval;
-
+        nextUpdateTime = worldTime + ResoniteMetricsCounterMod.UiUpdateInterval;
 
         var frames = metricsCounter.FrameCount;
 
@@ -292,31 +338,30 @@ internal sealed class MetricsPanel
 
         if (fpsField is not null && !fpsField.IsDisposed)
         {
-            fpsField.Value = $"{1000 * frames / elapsedTime:0.0}FPS";
+            fpsField.Value = $"{1000.0 * frames / elapsedTime:0.0}FPS";
         }
 
         if (elapsedTimeField is not null && !elapsedTimeField.IsDisposed)
         {
-            elapsedTimeField.Value = $"{elapsedTime}ms";
+            elapsedTimeField.Value = $"{elapsedTime:0.0}ms";
         }
 
         if (frameIntervalField is not null && !frameIntervalField.IsDisposed)
         {
-            frameIntervalField.Value = $"{elapsedTime / frames}ms";
+            frameIntervalField.Value = $"{elapsedTime / (double)frames:0.0}ms";
         }
 
         var totalTime = 1000.0 * metricsCounter.ByElement.Total / Stopwatch.Frequency;
 
         if (totalTimeField is not null && !totalTimeField.IsDisposed)
         {
-            totalTimeField.Value = $"{totalTime:0.00}ms";
+            totalTimeField.Value = $"{totalTime:0.0}ms";
         }
 
         if (avgTotalTimeField is not null && !avgTotalTimeField.IsDisposed)
         {
             avgTotalTimeField.Value = $"{totalTime / frames:0.000}ms";
         }
-
 
         var maxTime = 1000.0 * metricsCounter.ByElement.Max / Stopwatch.Frequency;
 
@@ -329,7 +374,6 @@ internal sealed class MetricsPanel
         {
             maxTimeField.Value = $"{maxTime:0.00}ms";
         }
-
 
         if (countField is not null && !countField.IsDisposed)
         {
@@ -344,6 +388,7 @@ internal sealed class MetricsPanel
             }
         }
     }
+
     public void Dispose()
     {
         slot?.Dispose();
@@ -351,6 +396,11 @@ internal sealed class MetricsPanel
 
     public void DisableStopButton()
     {
+        if (stopButton is null || stopButton.IsDisposed)
+        {
+            return;
+        }
+
         stopButton.Enabled = false;
     }
 }

@@ -1,9 +1,3 @@
-﻿using Elements.Core;
-using FrooxEngine;
-using FrooxEngine.ProtoFlux;
-using ResoniteMetricsCounter.Serialization;
-using ResoniteMetricsCounter.Utils;
-using ResoniteModLoader;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,37 +6,55 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Elements.Core;
+using FrooxEngine;
+using FrooxEngine.ProtoFlux;
+using ResoniteMetricsCounter.Serialization;
+using ResoniteMetricsCounter.Utils;
+using ResoniteModLoader;
 
 namespace ResoniteMetricsCounter.Metrics;
-
 
 internal sealed class MetricsCounter : IDisposable
 {
     private readonly CachedElementValue<IWorldElement, bool> shouldSkip;
 
-    [JsonInclude] public Slot? IgnoredHierarchy { get; private set; }
+    [JsonInclude]
+    public Slot? IgnoredHierarchy { get; private set; }
     internal bool IsDisposed { get; private set; }
 
-    [JsonInclude] public string Filename { get; private set; }
-    [JsonInclude] public VersionNumber EngineVersion { get; private set; }
-    [JsonInclude] public HashSet<string> BlackList { get; private set; }
+    [JsonInclude]
+    public string Filename { get; private set; }
 
-    [JsonInclude] public MetricsByStageStorage<IWorldElement> ByElement { get; private set; } = new();
-    [JsonInclude] public MetricsStorage<Slot> ByObjectRoot { get; private set; } = new();
+    [JsonInclude]
+    public VersionNumber EngineVersion { get; private set; }
+
+    [JsonInclude]
+    public HashSet<string> BlackList { get; private set; }
+
+    [JsonInclude]
+    public MetricsByStageStorage<IWorldElement> ByElement { get; private set; } = new();
+
+    [JsonInclude]
+    public MetricsStorage<Slot> ByObjectRoot { get; private set; } = new();
 
     private readonly Stopwatch stopwatch = new();
 
-    [JsonInclude] public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
+    [JsonInclude]
+    public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
     public long ElapsedTicks => stopwatch.ElapsedTicks;
 
-    [JsonInclude] public int FrameCount { get; private set; }
+    [JsonInclude]
+    public int FrameCount { get; private set; }
 
     public MetricsCounter(IEnumerable<string> blackList)
     {
         shouldSkip = new(ShouldSkipImpl);
 
         EngineVersion = Engine.Version;
-        Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json");
+        Filename = UniLog
+            .GenerateLogName(EngineVersion.ToString(), "-trace")
+            .Replace(".log", ".json");
         BlackList = blackList.ToHashSet();
 
         stopwatch.Start();
@@ -55,7 +67,11 @@ internal sealed class MetricsCounter : IDisposable
             return true;
         }
 
-        if (element.IsLocalElement || element.IsRemoved || BlackList.Contains(element.GetNameFast()))
+        if (
+            element.IsLocalElement
+            || element.IsRemoved
+            || BlackList.Contains(element.GetNameFast())
+        )
         {
             return true;
         }
@@ -138,7 +154,11 @@ internal sealed class MetricsCounter : IDisposable
         WriteIndented = true,
         IgnoreReadOnlyFields = false,
         IgnoreReadOnlyProperties = false,
-        Converters = { new IWorldElementConverter(), new JsonStringEnumConverter<World.RefreshStage>() },
+        Converters =
+        {
+            new IWorldElementConverter(),
+            new JsonStringEnumConverter<World.RefreshStage>(),
+        },
     };
 
     public void WriteToFile()
@@ -171,7 +191,9 @@ internal sealed class MetricsCounter : IDisposable
     {
         IgnoredHierarchy = slot;
         shouldSkip.Clear();
-        ByElement.RemoveWhere(m => m.Target.GetSlotFast()?.IsChildOf(slot, includeSelf: true) ?? false);
+        ByElement.RemoveWhere(m =>
+            m.Target.GetSlotFast()?.IsChildOf(slot, includeSelf: true) ?? false
+        );
         ByObjectRoot.RemoveWhere(m => m.Target.IsChildOf(slot, includeSelf: true));
     }
 

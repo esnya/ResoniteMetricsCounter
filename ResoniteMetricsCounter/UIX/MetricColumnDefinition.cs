@@ -1,11 +1,12 @@
-﻿using Elements.Core;
+using System;
+using System.Collections.Generic;
+using Elements.Core;
 using FrooxEngine;
 using FrooxEngine.UIX;
 using ResoniteMetricsCounter.Utils;
-using System;
-using System.Collections.Generic;
 
 namespace ResoniteMetricsCounter.UIX;
+
 internal struct MetricColumnDefinition
 {
     public string Label;
@@ -13,7 +14,12 @@ internal struct MetricColumnDefinition
     public float MinWidth;
     public Alignment Alignment;
 
-    public MetricColumnDefinition(string label, Alignment alignment = Alignment.MiddleLeft, float flexWidth = -1, float minWidth = -1)
+    public MetricColumnDefinition(
+        string label,
+        Alignment alignment = Alignment.MiddleLeft,
+        float flexWidth = -1,
+        float minWidth = -1
+    )
     {
         Label = label;
         FlexWidth = flexWidth;
@@ -21,7 +27,11 @@ internal struct MetricColumnDefinition
         Alignment = alignment;
     }
 
-    public static IEnumerable<Text> Build(UIBuilder uiBuilder, IEnumerable<MetricColumnDefinition> columns, Action<HorizontalLayout>? containerModifier = null)
+    public static IEnumerable<Text> Build(
+        UIBuilder uiBuilder,
+        IEnumerable<MetricColumnDefinition> columns,
+        Action<HorizontalLayout>? containerModifier = null
+    )
     {
         uiBuilder.PushStyle();
 

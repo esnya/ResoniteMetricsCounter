@@ -1,9 +1,7 @@
-﻿using FrooxEngine;
 using System.Runtime.CompilerServices;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Utils;
-
-
 
 internal static class WorldElementHelper
 {
@@ -18,7 +16,11 @@ internal static class WorldElementHelper
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override Slot? GetValue(in IWorldElement source)
         {
-            if (source is Slot slot) return slot;
+            if (source is Slot slot)
+            {
+                return slot;
+            }
+
             return source.Parent as Slot;
         }
     }
@@ -31,17 +33,18 @@ internal static class WorldElementHelper
             var slot = source.GetSlotFast();
             var localUserSlot = slot?.ActiveUserRoot?.Slot;
 
-            if (slot == localUserSlot) return slot;
+            if (slot == localUserSlot)
+            {
+                return slot;
+            }
 
             return slot?.GetObjectRoot(true) ?? slot?.World.RootSlot;
         }
     }
 
-
     private static readonly CachedElementName nameCache = new();
     private static readonly CachedElementSlot slotCache = new();
     private static readonly CachedGetMetricObjectRoot getMetricObjectRootCache = new();
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetNameFast(this IWorldElement element)

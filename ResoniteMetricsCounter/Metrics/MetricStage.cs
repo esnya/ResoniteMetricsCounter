@@ -1,5 +1,5 @@
-﻿using FrooxEngine;
 using System.Collections.Generic;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Metrics;
 
@@ -32,10 +32,8 @@ public enum MetricStage
     DynamicBoneChainFinish,
 }
 
-
 public static class MetricStageUtils
 {
-
     public static readonly HashSet<MetricStage> Collectables = new()
     {
         MetricStage.PhysicsMoved,

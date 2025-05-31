@@ -1,8 +1,8 @@
-﻿using Elements.Core;
-using FrooxEngine;
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Elements.Core;
+using FrooxEngine;
 
 namespace ResoniteMetricsCounter.Utils;
 
@@ -26,6 +26,7 @@ internal abstract class CachedValueBase<T, K, V>
         }
         return cache[key] = GetValue(source);
     }
+
     public void Clear()
     {
         cache.Clear();
@@ -45,43 +46,19 @@ internal abstract class FactoryCachedValueBase<T, K, V> : CachedValueBase<T, K, 
     }
 }
 
-
-//internal sealed class SimpleCachedValue<K, V> : FactoryCachedValueBase<K, K, V>
-//{
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    protected override K GetKey(in K source) => source;
-
-//    public SimpleCachedValue(Func<K, V> valueFactory) : base(valueFactory)
-//    {
-//    }
-//}
-
-//internal sealed class CachedValue<T, K, V> : FactoryCachedValueBase<T, K, V>
-//{
-//    private readonly Func<T, K> keySelector;
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//    protected override K GetKey(in T source) => keySelector(source);
-//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-
-//    public CachedValue(Func<T, K> keySelector, Func<T, V> valueFactory) : base(valueFactory)
-//    {
-//        this.keySelector = keySelector;
-//    }
-//}
-
-internal sealed class CachedElementValue<T, U> : FactoryCachedValueBase<T, RefID, U> where T : IWorldElement
+internal sealed class CachedElementValue<T, U> : FactoryCachedValueBase<T, RefID, U>
+    where T : IWorldElement
 {
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override RefID GetKey(in T source) => source.ReferenceID;
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
-    public CachedElementValue(Func<T, U> valueFactory) : base(valueFactory)
-    {
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public CachedElementValue(Func<T, U> valueFactory)
+        : base(valueFactory) { }
 }
 
-internal abstract class CachedElementValueBase<T, U> : CachedValueBase<T, RefID, U> where T : IWorldElement
+internal abstract class CachedElementValueBase<T, U> : CachedValueBase<T, RefID, U>
+    where T : IWorldElement
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override RefID GetKey(in T source) => source.ReferenceID;

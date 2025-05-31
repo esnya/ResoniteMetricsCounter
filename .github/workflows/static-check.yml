@@ -1,0 +1,19 @@
+name: Static Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  csharpier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Install csharpier
+        run: dotnet tool restore
+      - name: Run csharpier check
+        run: dotnet csharpier check .
