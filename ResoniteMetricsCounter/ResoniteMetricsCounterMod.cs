@@ -154,7 +154,8 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
 
 #if DEBUG
-        menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+        menuActionLabel =
+            $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
         DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
 #else
         DevCreateNewForm.AddAction("/Editor", MENU_ACTION, InitPanel);
