@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace ResoniteMetricsCounter.Utils;
 
-internal abstract class CachedValueBase<T, K, V>
+internal abstract class CachedValueBase<T, K, V> where K : notnull
 {
     private readonly ConcurrentDictionary<K, V> cache = new();
 
@@ -20,7 +20,7 @@ internal abstract class CachedValueBase<T, K, V>
     public V GetOrCache(in T source)
     {
         var key = GetKey(source);
-        if (cache.TryGetValue(key, out V res))
+    if (cache.TryGetValue(key, out V? res))
         {
             return res;
         }
@@ -32,7 +32,7 @@ internal abstract class CachedValueBase<T, K, V>
     }
 }
 
-internal abstract class FactoryCachedValueBase<T, K, V> : CachedValueBase<T, K, V>
+internal abstract class FactoryCachedValueBase<T, K, V> : CachedValueBase<T, K, V> where K : notnull
 {
     private readonly Func<T, V> valueFactory;
 

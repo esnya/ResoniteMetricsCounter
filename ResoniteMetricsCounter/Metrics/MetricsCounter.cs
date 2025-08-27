@@ -42,7 +42,7 @@ internal sealed class MetricsCounter : IDisposable
         shouldSkip = new(ShouldSkipImpl);
 
         EngineVersion = Engine.Version;
-        Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json");
+    Filename = UniLog.GenerateLogName(EngineVersion.ToString(), "-trace").Replace(".log", ".json", StringComparison.Ordinal);
         BlackList = blackList.ToHashSet();
 
         stopwatch.Start();

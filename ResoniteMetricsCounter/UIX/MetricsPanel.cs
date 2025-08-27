@@ -340,11 +340,14 @@ internal sealed class MetricsPanel
     }
     public void Dispose()
     {
-        slot?.Dispose();
+    slot?.Dispose();
     }
 
     public void DisableStopButton()
     {
-        stopButton.Enabled = false;
+        if (stopButton is not null)
+        {
+            stopButton.Enabled = false;
+        }
     }
 }

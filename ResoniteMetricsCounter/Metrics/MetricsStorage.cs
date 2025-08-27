@@ -132,7 +132,7 @@ internal sealed class MetricsStorage<T> : MetricStorageBase<T>, IDisposable wher
         if (isParallel)
         {
             hasParallelMetric = true;
-            InternalAdd(target, ticks, stage, parallelMetrics.Value);
+            InternalAdd(target, ticks, stage, parallelMetrics.Value!);
         }
         if (!isParallel)
         {
