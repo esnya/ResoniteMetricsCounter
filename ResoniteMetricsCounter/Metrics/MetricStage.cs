@@ -22,7 +22,6 @@ public enum MetricStage
     Changes = World.RefreshStage.Changes,
     ProtoFluxDiscreteChangesPost = World.RefreshStage.ProtoFluxDiscreteChangesPost,
     ParticleSystems = World.RefreshStage.ParticleSystems,
-    Connectors = World.RefreshStage.Connectors,
 
     Finished = World.RefreshStage.Finished,
 
@@ -48,7 +47,6 @@ public static class MetricStageUtils
         MetricStage.Changes,
         MetricStage.ProtoFluxDiscreteChangesPost,
         MetricStage.ParticleSystems,
-        MetricStage.Connectors,
         MetricStage.DynamicBoneChainPrepare,
         MetricStage.DynamicBoneChainOverlaps,
         MetricStage.DynamicBoneChainSimulation,

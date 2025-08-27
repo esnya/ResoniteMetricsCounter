@@ -26,35 +26,57 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     private const string MENU_ACTION = "Performance Metrics Counter (Mod)";
 
-    public override string Name => ModAssembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
-    public override string Author => ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company;
-    public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-    public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>().First(meta => meta.Key == "RepositoryUrl").Value;
+    public override string Name => ModAssembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title
+        ?? ModAssembly.GetName().Name
+        ?? "Resonite Metrics Counter";
+    public override string Author => ModAssembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company
+        ?? "unknown";
+    public override string Version => ModAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? ModAssembly.GetName().Version?.ToString()
+        ?? "0.0.0";
+    public override string Link => ModAssembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+        .FirstOrDefault(meta => meta.Key == "RepositoryUrl")?.Value ?? string.Empty;
 
     private static ModConfiguration? config;
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<string> blackListKey = new("BlackList", "Ignore those components. Commas separated.", computeDefault: () => string.Join(",", new[] {
-        nameof(InteractionHandler),
-        nameof(InteractionLaser),
-        nameof(HandPoser),
-        nameof(LocomotionController),
-        nameof(UserPoseController),
-        nameof(PhotoCaptureManager),
-        nameof(TipTouchSource),
-     }));
+    private static readonly ModConfigurationKey<string> blackListKey = new(
+        "BlackList",
+        "Ignore those components. Commas separated.",
+        computeDefault: () => string.Join(",", new[]
+        {
+            nameof(InteractionHandler),
+            nameof(InteractionLaser),
+            nameof(HandPoser),
+            nameof(LocomotionController),
+            nameof(UserPoseController),
+            nameof(PhotoCaptureManager),
+            nameof(TipTouchSource),
+        }));
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float2> panelSizeKey = new("PanelSize", "Size of the panel.", computeDefault: () => new float2(1200, 1200));
+    private static readonly ModConfigurationKey<float2> panelSizeKey = new(
+        "PanelSize",
+        "Size of the panel.",
+        computeDefault: () => new float2(1200, 1200));
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<int> maxItemsKey = new("MaxItems", "Max items to show in the panel.", computeDefault: () => 256);
+    private static readonly ModConfigurationKey<int> maxItemsKey = new(
+        "MaxItems",
+        "Max items to show in the panel.",
+        computeDefault: () => 256);
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<bool> writeToFileKey = new("WriteToFile", "Write metrics to file.", computeDefault: () => false);
+    private static readonly ModConfigurationKey<bool> writeToFileKey = new(
+        "WriteToFile",
+        "Write metrics to file.",
+        computeDefault: () => false);
 
     [AutoRegisterConfigKey]
-    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey = new("UIUpdateInterval", "Interval in seconds to update the UI.", computeDefault: () => 0.1f);
+    private static readonly ModConfigurationKey<float> uiUpdateIntervalKey = new(
+        "UIUpdateInterval",
+        "Interval in seconds to update the UI.",
+        computeDefault: () => 0.1f);
 
     private static readonly Harmony harmony = new($"com.nekometer.esnya.{ModAssembly.GetName()}");
     internal static MetricsPanel? Panel { get; private set; }
@@ -74,10 +96,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     public override void DefineConfiguration(ModConfigurationDefinitionBuilder builder)
     {
-        if (builder is null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         foreach (var stage in MetricStageUtils.Collectables)
         {
@@ -115,13 +134,15 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
 
 #if DEBUG
-        var menuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
-        DevCreateNewForm.AddAction("/Editor", menuActionLabel, InitPanel);
+        debugMenuActionLabel = $"{MENU_ACTION} ({HotReloader.GetReloadedCountOfModType(modInstance?.GetType())})";
+        DevCreateNewForm.AddAction("/Editor", debugMenuActionLabel, InitPanel);
 #else
         DevCreateNewForm.AddAction("/Editor", MENU_ACTION, InitPanel);
 #endif
     }
+
 #if DEBUG
+    private static string? debugMenuActionLabel;
 
     public static void BeforeHotReload()
     {
@@ -129,7 +150,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         {
             SetRunning(false);//check this line, I might have gotten this true/false value wrong.
             harmony.UnpatchCategory(Category.CORE);
-            HotReloader.RemoveMenuOption("/Editor", menuActionLabel);
+            HotReloader.RemoveMenuOption("/Editor", debugMenuActionLabel ?? MENU_ACTION);
         }
         catch (Exception e)
         {
@@ -163,11 +184,11 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Start(slot);
     }
 
-    private static void Start(Slot slot = null)
+    private static void Start(Slot? slot = null)
     {
         if (slot == null)
         {
-            //Msg("Assigning field \'old_slot\' to \'slot\' local variable");
+            //Msg("Assigning field 'old_slot' to 'slot' local variable");
             if (lastUsedSlot == null)
             {
                 throw new ArgumentNullException(nameof(slot));
@@ -183,7 +204,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         }
         else
         {
-            //Msg("Assigning local variable \'slot\' to \'old_slot\' field");
+            //Msg("Assigning local variable 'slot' to 'old_slot' field");
             lastUsedSlot = slot;
         }
         isRunning = true;
@@ -234,8 +255,6 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         Writer?.Dispose();
         WorldElementHelper.Clear();
 
-
-
         Msg("Profiler stopped");
     }
 
@@ -254,6 +273,5 @@ public class ResoniteMetricsCounterMod : ResoniteMod
         {
             Stop();
         }
-
     }
 }

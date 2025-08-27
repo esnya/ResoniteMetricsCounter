@@ -22,20 +22,20 @@ internal static class Metric_Profiler_Patch
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void StartTimer()
     {
-        stopwatch.Value.Restart();
+    stopwatch.Value!.Restart();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Record(object obj)
     {
-        stopwatch.Value.Stop();
-        ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(obj, stopwatch.Value.ElapsedTicks);
+    stopwatch.Value!.Stop();
+    ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(obj, stopwatch.Value.ElapsedTicks);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Record(object obj, MetricStage stage)
     {
-        stopwatch.Value.Stop();
+    stopwatch.Value!.Stop();
         if (obj is IWorldElement element)
         {
             ResoniteMetricsCounterMod.Writer?.Add(element, stopwatch.Value.ElapsedTicks, stage);
@@ -126,9 +126,8 @@ internal static class Metric_Profiler_Patch
     [HarmonyPatchCategory(Category.PROFILER), HarmonyPatch]
     private static class UpdateManager_Patch
     {
-        internal static readonly MethodBase updatesTarget = typeof(UpdateManager).Method(nameof(UpdateManager.RunUpdates));
-        internal static readonly MethodBase changesTarget = typeof(UpdateManager).Method("ProcessChange");
-        internal static readonly MethodBase connectorsTarget = typeof(UpdateManager).Method("ProcessConnectorUpdate");
+    internal static readonly MethodBase updatesTarget = typeof(UpdateManager).Method(nameof(UpdateManager.RunUpdates));
+    internal static readonly MethodBase changesTarget = typeof(UpdateManager).Method("ProcessChange");
 
 
         internal static IEnumerable<MethodBase> TargetMethods()
@@ -143,10 +142,7 @@ internal static class Metric_Profiler_Patch
                 yield return changesTarget;
             }
 
-            if (ResoniteMetricsCounterMod.GetStageConfigValue(MetricStage.Connectors))
-            {
-                yield return connectorsTarget;
-            }
+            // Connectors stage was removed in THE SPLITTENING; nothing to add here.
         }
 
         internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase __originalMethod)
@@ -161,11 +157,7 @@ internal static class Metric_Profiler_Patch
                 ResoniteMod.Msg("Patching a profiler for Changes");
                 return instructions.InjectProfiler(1, CodeMatch.Calls(() => default(IUpdatable)!.InternalRunApplyChanges(default)));
             }
-            else if (__originalMethod == connectorsTarget)
-            {
-                ResoniteMod.Msg("Patching a profiler for Connectors");
-                return instructions.InjectProfiler(1, CodeMatch.Calls(() => default(IImplementable)!.InternalUpdateConnector()));
-            }
+            // Connectors stage is no longer available to patch.
 
             return instructions;
         }

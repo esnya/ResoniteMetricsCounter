@@ -52,25 +52,48 @@ jobs:
       tag: v${{ steps.get_version.outputs.VERSION }}
 
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-    - id: checkout
-      name: Checkout
+    - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Build
-      uses: esnya/build-rml-mod@v1
+    - name: Setup Resonite environment
+      id: build-env
+      uses: resonite-modding-group/setup-resonite-env-action@v0.1.0
       with:
-        project: ${{ github.workspace }}/${{ env.project }}
-        steam-login: ${{ secrets.STEAMLOGIN }}
+        steam-user: ${{ secrets.STEAMUSER }}
+        steam-password: ${{ secrets.STEAMPASS }}
+
+    - name: Install ResoniteModLoader and Harmony
+      shell: bash
+      run: |
+        set -euo pipefail
+        LIBS_PATH="${{ steps.build-env.outputs.libraries-path }}"
+        RESONITE_DIR="$(dirname "${LIBS_PATH}")"
+        mkdir -p "${LIBS_PATH}" "${RESONITE_DIR}/rml_libs"
+        curl -fsSL -o "${LIBS_PATH}/ResoniteModLoader.dll" \
+          https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/ResoniteModLoader.dll
+        if ! curl -fsSL -o "${RESONITE_DIR}/rml_libs/0Harmony.dll" \
+          https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/0Harmony.dll; then
+          curl -fsSL -o "${RESONITE_DIR}/0Harmony.dll" \
+            https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/0Harmony.dll
+        fi
+
+    - name: Build (net9.0)
+      shell: bash
+      run: |
+        set -euo pipefail
+        LIBS_PATH="${{ steps.build-env.outputs.libraries-path }}"
+        RESONITE_DIR="$(dirname "${LIBS_PATH}")/"
+        dotnet build "${{ github.workspace }}/${{ env.project }}/${{ env.project }}.csproj" -c Release -p:ResonitePath="${RESONITE_DIR}"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.artifact }}
-        path: bin/Release/${{ env.artifact }}
+        path: ${{ env.project }}/bin/Release/net9.0/${{ env.artifact }}
 
   release:
     if: startsWith(github.ref, 'refs/tags/v') || needs.vtag.outputs.tagged

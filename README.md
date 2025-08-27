@@ -45,4 +45,8 @@ By following these tips, you can use this mod to make your world better and help
 
 ## Development Requirements
 
-For development, you will need the [ResoniteHotReloadLib](https://github.com/Nytra/ResoniteHotReloadLib) to be able to hot reload your mod with DEBUG build.
+For development:
+
+- Target framework is .NET 9 (net9.0).
+- CI builds on ubuntu-latest and sets up the Resonite environment via setup-resonite-env.
+- For hot reload in DEBUG, install [ResoniteHotReloadLib](https://github.com/Nytra/ResoniteHotReloadLib) into `rml_libs` in your local Resonite directory.
