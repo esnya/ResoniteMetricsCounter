@@ -102,10 +102,22 @@ jobs:
       - build
     runs-on: ubuntu-latest
     steps:
+    - name: Compute tag and prerelease flag
+      id: vars
+      shell: bash
+      env:
+        RAW_TAG: ${{ needs.vtag.outputs.tagged && needs.vtag.outputs.tag || github.ref_name }}
+      run: |
+        echo "tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
+        if [[ "${RAW_TAG}" == *-* ]]; then
+          echo "prerelease=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "prerelease=false" >> "$GITHUB_OUTPUT"
+        fi
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        ref:  ${{ needs.vtag.outputs.tagged && needs.vtag.outputs.tag || github.ref }}
+        ref:  ${{ steps.vars.outputs.tag }}
         fetch-depth: 0
     - name: Download Artifacts
       uses: actions/download-artifact@v4
@@ -117,4 +129,5 @@ jobs:
         files: |
           ${{ env.artifact }}
         generate_release_notes: true
-        tag_name: ${{ needs.vtag.outputs.tagged && needs.vtag.outputs.tag || github.ref }}
+        tag_name: ${{ steps.vars.outputs.tag }}
+        prerelease: ${{ steps.vars.outputs.prerelease }}
