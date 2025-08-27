@@ -42,15 +42,9 @@ internal sealed class MetricsPanel
 
     public MetricsPanel(Slot slot, MetricsCounter metricsCounter, in float2 size, int maxItems)
     {
-        if (slot is null)
-        {
-            throw new ArgumentNullException(nameof(slot));
-        }
+        ArgumentNullException.ThrowIfNull(slot);
 
-        if (metricsCounter is null)
-        {
-            throw new ArgumentNullException(nameof(metricsCounter));
-        }
+        ArgumentNullException.ThrowIfNull(metricsCounter);
 
         this.maxItems = maxItems;
         this.metricsCounter = metricsCounter;

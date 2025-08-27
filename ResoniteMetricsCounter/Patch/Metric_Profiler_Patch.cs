@@ -22,20 +22,20 @@ internal static class Metric_Profiler_Patch
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void StartTimer()
     {
-    stopwatch.Value!.Restart();
+        stopwatch.Value!.Restart();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Record(object obj)
     {
-    stopwatch.Value!.Stop();
-    ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(obj, stopwatch.Value.ElapsedTicks);
+        stopwatch.Value!.Stop();
+        ResoniteMetricsCounterMod.Writer?.AddForCurrentStage(obj, stopwatch.Value.ElapsedTicks);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Record(object obj, MetricStage stage)
     {
-    stopwatch.Value!.Stop();
+        stopwatch.Value!.Stop();
         if (obj is IWorldElement element)
         {
             ResoniteMetricsCounterMod.Writer?.Add(element, stopwatch.Value.ElapsedTicks, stage);
@@ -126,8 +126,8 @@ internal static class Metric_Profiler_Patch
     [HarmonyPatchCategory(Category.PROFILER), HarmonyPatch]
     private static class UpdateManager_Patch
     {
-    internal static readonly MethodBase updatesTarget = typeof(UpdateManager).Method(nameof(UpdateManager.RunUpdates));
-    internal static readonly MethodBase changesTarget = typeof(UpdateManager).Method("ProcessChange");
+        internal static readonly MethodBase updatesTarget = typeof(UpdateManager).Method(nameof(UpdateManager.RunUpdates));
+        internal static readonly MethodBase changesTarget = typeof(UpdateManager).Method("ProcessChange");
 
 
         internal static IEnumerable<MethodBase> TargetMethods()

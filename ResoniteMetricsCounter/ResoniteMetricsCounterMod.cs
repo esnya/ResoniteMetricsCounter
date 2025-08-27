@@ -171,10 +171,7 @@ public class ResoniteMetricsCounterMod : ResoniteMod
 
     public static void InitPanel(Slot slot)
     {
-        if (Panel is not null)
-        {
-            Panel.DisableStopButton();
-        }
+        Panel?.DisableStopButton();
 
         if (lastUsedSlot is not null && isRunning is true)
         {

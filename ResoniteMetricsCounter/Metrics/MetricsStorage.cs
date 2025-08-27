@@ -185,7 +185,7 @@ public sealed class MetricsByStageStorage<T> : IMetricStorage<T> where T : IWorl
     private readonly List<MetricsStorageImpl> storageByStage;
     public MetricsByStageStorage()
     {
-        var stageCount = Enum.GetValues(typeof(MetricStage)).AsQueryable().Cast<int>().Max() + 1;
+        var stageCount = Enum.GetValues<MetricStage>().AsQueryable().Cast<int>().Max() + 1;
         storageByStage = new(Enumerable.Range(0, stageCount).Select(_ => new MetricsStorageImpl()));
     }
 
