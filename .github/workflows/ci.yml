@@ -1,0 +1,77 @@
+name: ci
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      RESONITE_INSTALL_DIR: ${{ github.workspace }}/Resonite
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Resonite environment
+        uses: resonite-modding-group/setup-resonite-env-action@v0.1.0
+        with:
+          steam-user: ${{ secrets.STEAMUSER }}
+          steam-password: ${{ secrets.STEAMPASS }}
+          resonite-path: ${{ env.RESONITE_INSTALL_DIR }}
+
+      - name: Prepare fallback references
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RESONITE_INSTALL_DIR}/Libraries" "${RESONITE_INSTALL_DIR}/rml_libs"
+          curl -fsSL -o "${RESONITE_INSTALL_DIR}/Libraries/ResoniteModLoader.dll" \
+            https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/ResoniteModLoader.dll
+          curl -fsSL -o "${RESONITE_INSTALL_DIR}/rml_libs/0Harmony.dll" \
+            https://github.com/resonite-modding-group/ResoniteModLoader/releases/latest/download/0Harmony.dll
+
+      - name: Restore
+        run: dotnet restore ./ResoniteMetricsCounter.sln -p:ResonitePath="${{ env.RESONITE_INSTALL_DIR }}/"
+
+      - name: Build
+        run: dotnet build ./ResoniteMetricsCounter.sln -c Release --no-restore -p:ResonitePath="${{ env.RESONITE_INSTALL_DIR }}/"
+
+      - name: Test
+        run: dotnet test ./ResoniteMetricsCounter.sln -c Release --no-build -p:ResonitePath="${{ env.RESONITE_INSTALL_DIR }}/"
+
+      - name: Pack artifact
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          cp ./ResoniteMetricsCounter/bin/Release/net10.0/ResoniteMetricsCounter.dll ./artifacts/
+
+      - name: Upload artifact
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v7
+        with:
+          name: ResoniteMetricsCounter
+          path: artifacts/ResoniteMetricsCounter.dll
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" ./artifacts/ResoniteMetricsCounter.dll --verify-tag --generate-notes
