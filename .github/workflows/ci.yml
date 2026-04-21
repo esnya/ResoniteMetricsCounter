@@ -11,6 +11,7 @@ on:
       - master
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -28,13 +29,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-
-      - name: Setup Resonite environment
-        uses: resonite-modding-group/setup-resonite-env-action@v0.1.0
-        with:
-          steam-user: ${{ secrets.STEAMUSER }}
-          steam-password: ${{ secrets.STEAMPASS }}
-          resonite-path: ${{ env.RESONITE_INSTALL_DIR }}
 
       - name: Prepare fallback references
         shell: bash
