@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<GenerateAssemblyInfo>True</GenerateAssemblyInfo>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<FileAlignment>512</FileAlignment>
 		<LangVersion>10.0</LangVersion>
 		<Nullable>enable</Nullable>
@@ -47,6 +47,11 @@
 		<ResonitePath Condition="Exists('$(HOME)/.local/share/Steam/steamapps/common/Resonite/')">$(HOME)/.local/share/Steam/steamapps/common/Resonite/</ResonitePath>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<FrooxEnginePresent Condition="Exists('$(ResonitePath)FrooxEngine.dll')">true</FrooxEnginePresent>
+		<FrooxEnginePresent Condition="'$(FrooxEnginePresent)'==''">false</FrooxEnginePresent>
+	</PropertyGroup>
+
 	<ItemGroup>
 	  <None Include="..\README.md">
 	    <Pack>True</Pack>
@@ -55,7 +60,7 @@
 	  <None Include="C:\Users\esnya\Documents\rml_mods\ResoniteMetricsCounter\ResoniteMetricsCounter\.editorconfig" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(FrooxEnginePresent)'=='true'">
 		<Reference Include="ResoniteModLoader">
 		    <HintPath>$(ResonitePath)Libraries/ResoniteModLoader.dll</HintPath>
 		    <Private>False</Private>
@@ -76,6 +81,19 @@
 
 		<Reference Include="ResoniteHotReloadLib" Condition="'$(Configuration)'=='Debug'">
 			<HintPath>$(ResonitePath)rml_libs/ResoniteHotReloadLib.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(FrooxEnginePresent)'!='true'">
+		<PackageReference Include="Resonite.GameLibs" Version="2026.4.16.1327" />
+		<Reference Include="ResoniteModLoader">
+		    <HintPath>$(ResonitePath)Libraries/ResoniteModLoader.dll</HintPath>
+		    <Private>False</Private>
+		</Reference>
+		<Reference Include="HarmonyLib">
+		    <HintPath>$(ResonitePath)rml_libs/0Harmony.dll</HintPath>
+		    <HintPath Condition="Exists('$(ResonitePath)0Harmony.dll')">$(ResonitePath)0Harmony.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
