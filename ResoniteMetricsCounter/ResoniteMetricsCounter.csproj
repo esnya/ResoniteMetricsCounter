@@ -25,7 +25,7 @@
 		<RepositoryUrl>https://github.com/esnya/ResoniteMetricsCounter</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>Resonite,Mod,ResoniteModLoader,Profiler,Metrics</PackageTags>
-		<Version>0.8.0</Version>
+		<Version>0.8.1</Version>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
@@ -86,7 +86,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(FrooxEnginePresent)'!='true'">
-		<PackageReference Include="Resonite.GameLibs" Version="2026.4.16.1327" />
+		<PackageReference Include="Resonite.GameLibs" Version="2026.8.27.1094" />
 		<Reference Include="ResoniteModLoader">
 		    <HintPath>$(ResonitePath)Libraries/ResoniteModLoader.dll</HintPath>
 		    <Private>False</Private>
