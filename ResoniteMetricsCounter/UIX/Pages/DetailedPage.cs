@@ -101,9 +101,17 @@ internal sealed class DetailedPage : MetricsPageBase
         {
             var item = items[i] ?? (items[i] = new Item(container, Columns));
 
-            if (!item.Update(metric, maxTicks, totalTicks, frameCount))
+            //quick fix for handling deleted objects, I was unable to find what value was made null to catch it earlier.
+            try
             {
-                metricsCounter.ByElement.Remove(metric.Target);
+                if (!item.Update(metric, maxTicks, totalTicks, frameCount))
+                {
+                    metricsCounter.ByElement.Remove(metric.Target);
+                }
+            }
+            catch
+            {
+                    metricsCounter.ByElement.Remove(metric.Target);
             }
             i++;
         }
